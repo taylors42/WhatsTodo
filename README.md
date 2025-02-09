@@ -9,20 +9,20 @@ O WhatsApp To-Do Manager é uma solução inovadora que permite aos usuários ge
 ## ✨ Funcionalidades
 
 ### Implementadas
-- [ ] Configuração de horários permitidos para notificações
-- [ ] Criação de tarefas com título, data, hora e descrição
-- [ ] Sistema de recorrência de tarefas
-- [ ] Listagem de tarefas pendentes
+
+- [x] Criação de tarefas com título, data, hora e descrição
+- [x] Listagem de tarefas pendentes
 - [ ] Exclusão de tarefas
 - [ ] Sistema de notificações automáticas
-- [ ] Menu de ajuda com comandos disponíveis
+- [x] Menu de ajuda com comandos disponíveis
 
 ### Comandos Disponíveis
-- `/novo` ou `criar tarefa`: Cria uma nova tarefa
-- `ver tarefas`: Lista todas as tarefas futuras
-- `editar horários` ou `/horario`: Configura horários permitidos
-- `excluir tarefa`: Remove uma tarefa específica
-- `/ajuda`: Exibe instruções e comandos disponíveis
+
+- `/addtask`: Cria uma nova tarefa
+- `/edittask`: Editar uma tarefa
+- `/listtask`: Lista todas as tarefas futuras
+- `/creditos`: Criadores do projeto To-Do
+- `/help`: Exibe instruções e comandos disponíveis
 
 ## 🚀 Tecnologias
 
@@ -42,67 +42,65 @@ Este projeto utiliza as seguintes tecnologias:
 ## 🔧 Instalação
 
 1. Clone o repositório
-```bash
-git clone https://github.com/seu-usuario/whatsapp-todo-manager.git
-```
+   
+   ```bash
+   git clone https://github.com/seu-usuario/whatsapp-todo-manager.git
+   ```
 
 2. Abra a solução no Visual Studio
-```bash
-cd whatsapp-todo-manager
-WhatsAppToDoManager.sln
-```
+   
+   ```bash
+   cd whatsapp-todo-manager
+   WhatsAppToDoManager.sln
+   ```
 
 3. Restaure os pacotes NuGet
-```bash
-dotnet restore
-```
+   
+   ```bash
+   dotnet restore
+   ```
 
 4. Configure o arquivo appsettings.json
-```bash
-cp appsettings.example.json appsettings.json
-# Edite o arquivo appsettings.json com suas configurações
-```
+   
+   ```bash
+   cp appsettings.example.json appsettings.json
+   # Edite o arquivo appsettings.json com suas configurações
+   ```
 
 5. Execute as migrações do banco de dados
-```bash
-dotnet ef database update
-```
+   
+   ```bash
+   dotnet ef database update
+   ```
 
 6. Execute o projeto
-```bash
-dotnet run
-```
+   
+   ```bash
+   dotnet run
+   ```
 
 Alternativamente, você pode abrir o projeto no Visual Studio e pressionar F5 para executar em modo debug.
 
 ## 📊 Estrutura do Banco de Dados
 
-### Tabela `users`
-- `phone_number` (VARCHAR) - Número do telefone (PK)
-- `start_time` (TIME) - Horário inicial para notificações
-- `end_time` (TIME) - Horário final para notificações
-- `created_at` (TIMESTAMP) - Data de criação
-- `is_active` (BOOLEAN) - Status do usuário
-
 ### Tabela `todos`
+
 - `id` (INTEGER) - ID da tarefa (PK)
-- `user_phone` (VARCHAR) - Número do usuário (FK)
 - `title` (VARCHAR) - Título da tarefa
 - `description` (TEXT) - Descrição da tarefa
 - `notification_date` (DATE) - Data da notificação
 - `notification_time` (TIME) - Hora da notificação
-- `is_recurring` (BOOLEAN) - Indica se é recorrente
-- `recurrence_pattern` (VARCHAR) - Padrão de recorrência
 - `is_completed` (BOOLEAN) - Status de conclusão
 - `created_at` (TIMESTAMP) - Data de criação
+- `user_phone` (VARCHAR) - Número do usuário (FK)
 
 ## 📝 Status do Projeto
 
 ### MVP
+
 - [x] Estruturação do banco de dados
-- [ ] Configuração inicial do projeto
-- [ ] Implementação da API do WhatsApp
-- [ ] Sistema de configuração de horários
+- [x] Configuração inicial do projeto
+- [x] Implementação da API do WhatsApp
 - [ ] CRUD básico de tarefas
 - [ ] Sistema de notificações
 
@@ -120,7 +118,8 @@ Este projeto está sob a licença MIT. Veja o arquivo [LICENSE](LICENSE) para ma
 
 ## 👥 Autores
 
-* **Taylor S** - *Trabalho Inicial* - [taylors42](https://github.com/taylors42)
+* **Taylor S** - *Trabalho Inicial* - [Taylors42](https://github.com/taylors42)
+* **Camily Z** - *Desenvolvedora* - [MilyZani](https://github.com/MilyZani)
 
 ## 🙏 Agradecimentos
 
