@@ -67,7 +67,6 @@ public class WebHookController : ControllerBase
                             User = userNumber,
                             Text = userMessage
                         };
-
                         Processor.ProcessorHandler(update);
                     }
                 }

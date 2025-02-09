@@ -43,7 +43,13 @@ public static class Database
         }
     }
 
-    public static bool AddTask(string title, string description, DateTime notificationDate, TimeSpan notificationTime, string userPhone)
+    public static bool AddTask(
+        string title,
+        string description,
+        DateTime notificationDate,
+        TimeSpan notificationTime,
+        string userPhone
+    )
     {
         try
         {
@@ -81,7 +87,13 @@ public static class Database
         }
     }
 
-    public static bool UpdateTask(string title, string newDescription, DateTime newNotificationDate, TimeSpan newNotificationTime, string userPhone)
+    public static bool UpdateTask(
+        string title,
+        string newDescription,
+        DateTime newNotificationDate,
+        TimeSpan newNotificationTime,
+        string userPhone
+    )
     {
         try
         {
@@ -173,7 +185,7 @@ public static class Database
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"Erro ao verificar exist�ncia da tarefa: {ex.Message}");
+            Console.WriteLine($"Erro ao verificar existência da tarefa: {ex.Message}");
             return false;
         }
     }
@@ -216,6 +228,113 @@ public static class Database
         {
             Console.WriteLine($"Erro ao buscar tarefas: {ex.Message}");
             return new List<object>();
+        }
+    }
+
+    public static bool RemoveTask(string title, string userPhone)
+    {
+        try
+        {
+            using var connection = new SqliteConnection("Data Source=Database/whatstodo.db");
+            connection.Open();
+
+            using var command = connection.CreateCommand();
+            command.CommandText = @"
+                DELETE FROM todos 
+                WHERE LOWER(title) = LOWER(@title)
+                AND user_phone = @user_phone
+                AND is_completed = FALSE;";
+
+            command.Parameters.AddWithValue("@title", title.Trim());
+            command.Parameters.AddWithValue("@user_phone", userPhone);
+
+            int rowsAffected = command.ExecuteNonQuery();
+            return rowsAffected > 0;
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Erro ao remover tarefa: {ex.Message}");
+            return false;
+        }
+    }
+
+    public static List<(string UserPhone, string Title, string Description)> GetPendingNotifications()
+    {
+        try
+        {
+            using var connection = new SqliteConnection("Data Source=Database/whatstodo.db");
+            connection.Open();
+
+            // Get current time in Brazil timezone
+            TimeZoneInfo brasiliaTimeZone;
+            try
+            {
+                // Windows timezone ID
+                brasiliaTimeZone = TimeZoneInfo.FindSystemTimeZoneById("E. South America Standard Time");
+            }
+            catch
+            {
+                // Linux timezone ID
+                brasiliaTimeZone = TimeZoneInfo.FindSystemTimeZoneById("America/Sao_Paulo");
+            }
+
+            var nowInBrasilia = TimeZoneInfo.ConvertTimeFromUtc(DateTime.UtcNow, brasiliaTimeZone);
+
+            using var command = connection.CreateCommand();
+            command.CommandText = @"
+                SELECT user_phone, title, description
+                FROM todos
+                WHERE notification_date = @current_date
+                AND notification_time <= @current_time
+                AND is_completed = FALSE;";
+
+            command.Parameters.AddWithValue("@current_date", nowInBrasilia.ToString("yyyy-MM-dd"));
+            command.Parameters.AddWithValue("@current_time", nowInBrasilia.ToString("HH:mm"));
+
+            var notifications = new List<(string UserPhone, string Title, string Description)>();
+            
+            using var reader = command.ExecuteReader();
+            while (reader.Read())
+            {
+                notifications.Add((
+                    reader.GetString(0),
+                    reader.GetString(1),
+                    reader.GetString(2)
+                ));
+            }
+
+            return notifications;
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Erro ao buscar notificações pendentes: {ex.Message}");
+            return new List<(string, string, string)>();
+        }
+    }
+
+    public static bool MarkTaskAsCompleted(string title, string userPhone)
+    {
+        try
+        {
+            using var connection = new SqliteConnection("Data Source=Database/whatstodo.db");
+            connection.Open();
+
+            using var command = connection.CreateCommand();
+            command.CommandText = @"
+                UPDATE todos
+                SET is_completed = TRUE
+                WHERE LOWER(title) = LOWER(@title)
+                AND user_phone = @user_phone;";
+
+            command.Parameters.AddWithValue("@title", title);
+            command.Parameters.AddWithValue("@user_phone", userPhone);
+
+            return command.ExecuteNonQuery() > 0;
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Erro ao marcar tarefa como completa: {ex.Message}");
+            return false;
         }
     }
 }

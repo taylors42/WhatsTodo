@@ -2,5 +2,5 @@
 
 public enum ContextState
 {
-    InContext
+    InContext,
 }
