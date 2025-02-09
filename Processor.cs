@@ -1,5 +1,4 @@
 ﻿using WhatsTodo.Database;
-using System.Linq;
 namespace WhatsTodo;
 
 public class TaskCommand
@@ -105,14 +104,12 @@ public static class Processor
         if (!Chats.ContainsKey(message.User))
         {
             Chats[message.User] = ContextState.InContext;
-            Bot.SendMessageTextAsync(
-                message.User,
-                Resources.FirstUserMessage
-            );
+            Bot.SendMessageTextAsync(message.User, Resources.FirstUserMessage);
             return;
         }
 
-        if (!message.Text.StartsWith("/")) return;
+        if (!message.Text.StartsWith("/"))
+            return;
 
         string text = message.Text;
         var command = text.Split(' ')[0].ToLower();
@@ -145,17 +142,11 @@ public static class Processor
                         return;
                     }
 
-                    Bot.SendMessageTextAsync(
-                        message.User,
-                        Resources.FormatInvalid
-                    );
+                    Bot.SendMessageTextAsync(message.User, Resources.FormatInvalid);
                 }
                 catch (Exception)
                 {
-                    Bot.SendMessageTextAsync(
-                        message.User,
-                        Resources.FormatInvalid
-                    );
+                    Bot.SendMessageTextAsync(message.User, Resources.FormatInvalid);
                 }
                 break;
 
@@ -181,21 +172,15 @@ public static class Processor
                 }
                 catch (Exception)
                 {
-                    Bot.SendMessageTextAsync(
-                        message.User,
-                        Resources.FormatInvalid
-                    );
+                    Bot.SendMessageTextAsync(message.User, Resources.FormatInvalid);
                 }
                 break;
 
             case "/listtask":
-                List <dynamic> tasks = Database.Database.GetUserTasks(message.User);
+                List<dynamic> tasks = Database.Database.GetUserTasks(message.User);
                 if (tasks.Count == 0)
                 {
-                    Bot.SendMessageTextAsync(
-                        message.User,
-                        "Você não possui tarefas pendentes."
-                    );
+                    Bot.SendMessageTextAsync(message.User, "Você não possui tarefas pendentes.");
                     return;
                 }
 
@@ -207,10 +192,33 @@ public static class Processor
                     taskList += $"⏰ {task.NotificationDate:dd/MM/yyyy} às {task.NotificationTime:hh\\:mm}\n\n";
                 }
 
-                Bot.SendMessageTextAsync(
-                    message.User,
-                    taskList
-                );
+                Bot.SendMessageTextAsync(message.User, taskList);
+                break;
+
+            case "/deletetask":
+                try
+                {
+                    var taskTitle = message.Text.Substring(message.Text.IndexOf(' ') + 1).Trim();
+
+                    if (Database.Database.RemoveTask(taskTitle, message.User))
+                    {
+                        Bot.SendMessageTextAsync(
+                            message.User,
+                            $"Tarefa '{taskTitle}' removida com sucesso!"
+                        );
+                    }
+                    else
+                    {
+                        Bot.SendMessageTextAsync(
+                            message.User,
+                            "Tarefa não encontrada ou já foi concluída. Use /listtask para ver suas tarefas pendentes."
+                        );
+                    }
+                }
+                catch (Exception)
+                {
+                    Bot.SendMessageTextAsync(message.User, Resources.FormatInvalid);
+                }
                 break;
 
             case "/creditos":
@@ -223,17 +231,11 @@ public static class Processor
                 break;
 
             case "/help":
-                Bot.SendMessageTextAsync(
-                    message.User,
-                    Resources.HelpMessageText
-                );
+                Bot.SendMessageTextAsync(message.User, Resources.HelpMessageText);
                 break;
 
             default:
-                Bot.SendMessageTextAsync(
-                    message.User,
-                    Resources.CommandDontFind
-                );
+                Bot.SendMessageTextAsync(message.User, Resources.CommandDontFind);
                 break;
         }
     }
