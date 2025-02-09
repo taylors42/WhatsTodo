@@ -130,6 +130,6 @@
     <value>Para solicitar ajuda digite /ajuda</value>
   </data>
   <data name="HelpMessageText" xml:space="preserve">
-    <value>Para adicionar uma tarefa digite /criartarefa nome_da_tarefa descricao da tarefa 12:30 (horario da tarefa)</value>
+    <value>Para adicionar uma tarefa digite /addtask nome_da_tarefa descricao da tarefa 12:30 (horario da tarefa)</value>
   </data>
 </root>
