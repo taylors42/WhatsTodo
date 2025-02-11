@@ -1,0 +1,32 @@
+name: Deploy on vps
+
+on:
+  push:
+    branches: main
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    environment: prod
+
+    steps:
+      # Faz o checkout do código
+      - uses: actions/checkout@v2
+
+      # Conecta ao VPS e sincroniza o repositório
+      - name: Update code and run dotnet on VPS
+        uses: appleboy/ssh-action@v0.1.5
+        with:
+          host: ${{ secrets.SSH_HOST }}
+          username: root
+          password: ${{ secrets.SSH_PASS }}
+          script: |
+            cd /home/github
+            if [ ! -d ".git" ]; then
+              git clone https://github.com/taylors42/WhatsTodo .
+            else
+              git reset --hard
+              git pull origin main
+            fi
+            dotnet restore
+            nohup dotnet run > app.log 2>&1 &
