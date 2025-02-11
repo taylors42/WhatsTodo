@@ -19,6 +19,7 @@ jobs:
           password: ${{ secrets.SSH_PASS }}
           script: |
             cd /home/github/WhatsTodo
+            pkill -f "dotnet"
             git pull
             dotnet restore
             nohup dotnet run > app.log 2>&1 &
