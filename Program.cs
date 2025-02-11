@@ -26,7 +26,7 @@ public static class Program
 
         app.MapControllers();
     
-        app.Urls.Add("https://localhost:5500");
+        app.Urls.Add("https://localhost:82");
     
         app.MapGet("/", () => Results.Ok(new{result="API OK"}));
         
