@@ -110,8 +110,9 @@ public static class Processor
         if (!message.Text.StartsWith("/")) return;
 
         string text = message.Text;
-        var command = text.Split(' ')[0].ToLower();
-
+        string command = text.Split(' ')[0].ToLower();
+        // "taylor0 de1 souza2 ferreira3"
+        // /adtask titulo descricao mais descricao 13:50
         switch (command)
         {
             case "/addtask":
@@ -131,7 +132,7 @@ public static class Processor
                     }
                     else if (!ValidateAndAddTask(taskCommand, message.User))
                     {
-                        Bot.SendMessageTextAsync(message.User, Resources.FormatInvalid);
+                        Bot.SendMessageTextAsync(message.User, Resources.ErrorAddtask);
                     }
                     else
                     {

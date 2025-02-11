@@ -61,16 +61,34 @@ namespace WhatsTodo {
         }
         
         /// <summary>
-        ///   Consulta uma cadeia de caracteres localizada semelhante a Comando não encontrado.
+        ///   Consulta uma cadeia de caracteres localizada semelhante a ERRO DE COMANDO- Use o formato válido para adicionar uma tarefa, espaçando entre os elementos:/addtask Titulo Descrição Horário (12:00).
         /// </summary>
-        internal static string CommandDontFind {
+        internal static string ErrorAddtask {
             get {
-                return ResourceManager.GetString("CommandDontFind", resourceCulture);
+                return ResourceManager.GetString("ErrorAddtask", resourceCulture);
             }
         }
         
         /// <summary>
-        ///   Consulta uma cadeia de caracteres localizada semelhante a Para solicitar ajuda digite /ajuda.
+        ///   Consulta uma cadeia de caracteres localizada semelhante a ERRO DE COMANDO- Use o formato válido para deletar uma tarefa, espaçando entre os elementos:/deletetask Titulo.
+        /// </summary>
+        internal static string ErrorDeletetask {
+            get {
+                return ResourceManager.GetString("ErrorDeletetask", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Consulta uma cadeia de caracteres localizada semelhante a ERRO DE COMANDO- Use o formato válido para editar uma tarefa, espaçando entre os elementos:/edittask NovoTitulo NovaDescrição NovoHorário(12:00).
+        /// </summary>
+        internal static string ErrorEdittask {
+            get {
+                return ResourceManager.GetString("ErrorEdittask", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Consulta uma cadeia de caracteres localizada semelhante a Para solicitar ajuda digite /help.
         /// </summary>
         internal static string FirstUserMessage {
             get {
@@ -79,7 +97,7 @@ namespace WhatsTodo {
         }
         
         /// <summary>
-        ///   Consulta uma cadeia de caracteres localizada semelhante a Formato Invalido, digite /ajuda para obter informações.
+        ///   Consulta uma cadeia de caracteres localizada semelhante a Formato Invalido, digite /help para obter informações.
         /// </summary>
         internal static string FormatInvalid {
             get {
@@ -88,20 +106,28 @@ namespace WhatsTodo {
         }
         
         /// <summary>
-        ///   Consulta uma cadeia de caracteres localizada semelhante a Para adicionar uma tarefa digite /addtask nome_da_tarefa descricao da tarefa 12:30 (horario da tarefa).
+        ///   Consulta uma cadeia de caracteres localizada semelhante a COMANDOS
+        ///(Seguir os espaçamentos entre comandos, títulos, descrições e horários)
+        ///
+        ///ADICIONAR UMA TAREFA:
+        ////addtask Titulo Descrição Horário(12:00)
+        ///
+        ///EDITAR UMA TAREFA EXISTENTE:
+        ////edittask NovoTitulo NovaDescrição NovoHorario(13:00)
+        ///
+        ///LISTAR AS TAREFAS EXISTENTES:
+        ////listtask
+        ///
+        ///DELETAR UMA TAREFA EXISTENTE:
+        ////deletetask Titulo
+        ///
+        ///CONTATO DOS CRIADORES DO BOT:
+        ////créditos
+        ///.
         /// </summary>
         internal static string HelpMessageText {
             get {
                 return ResourceManager.GetString("HelpMessageText", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Consulta uma cadeia de caracteres localizada semelhante a Você ainda não está cadastrado, preencha esse formulario..
-        /// </summary>
-        internal static string UserDontExistsMessage {
-            get {
-                return ResourceManager.GetString("UserDontExistsMessage", resourceCulture);
             }
         }
     }

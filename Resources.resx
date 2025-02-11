@@ -117,19 +117,39 @@
   <resheader name="writer">
     <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </resheader>
-  <data name="UserDontExistsMessage" xml:space="preserve">
-    <value>Você ainda não está cadastrado, preencha esse formulario.</value>
-  </data>
-  <data name="CommandDontFind" xml:space="preserve">
-    <value>Comando não encontrado</value>
-  </data>
   <data name="FormatInvalid" xml:space="preserve">
-    <value>Formato Invalido, digite /ajuda para obter informações</value>
+    <value>Formato Invalido, digite /help para obter informações</value>
   </data>
   <data name="FirstUserMessage" xml:space="preserve">
-    <value>Para solicitar ajuda digite /ajuda</value>
+    <value>Para solicitar ajuda digite /help</value>
   </data>
   <data name="HelpMessageText" xml:space="preserve">
-    <value>Para adicionar uma tarefa digite /addtask nome_da_tarefa descricao da tarefa 12:30 (horario da tarefa)</value>
+    <value>COMANDOS
+(Seguir os espaçamentos entre comandos, títulos, descrições e horários)
+
+ADICIONAR UMA TAREFA:
+/addtask Titulo Descrição Horário(12:00)
+
+EDITAR UMA TAREFA EXISTENTE:
+/edittask NovoTitulo NovaDescrição NovoHorario(13:00)
+
+LISTAR AS TAREFAS EXISTENTES:
+/listtask
+
+DELETAR UMA TAREFA EXISTENTE:
+/deletetask Titulo
+
+CONTATO DOS CRIADORES DO BOT:
+/créditos
+</value>
+  </data>
+  <data name="ErrorAddtask" xml:space="preserve">
+    <value>ERRO DE COMANDO- Use o formato válido para adicionar uma tarefa, espaçando entre os elementos:/addtask Titulo Descrição Horário (12:00)</value>
+  </data>
+  <data name="ErrorEdittask" xml:space="preserve">
+    <value>ERRO DE COMANDO- Use o formato válido para editar uma tarefa, espaçando entre os elementos:/edittask NovoTitulo NovaDescrição NovoHorário(12:00)</value>
+  </data>
+  <data name="ErrorDeletetask" xml:space="preserve">
+    <value>ERRO DE COMANDO- Use o formato válido para deletar uma tarefa, espaçando entre os elementos:/deletetask Titulo</value>
   </data>
 </root>
