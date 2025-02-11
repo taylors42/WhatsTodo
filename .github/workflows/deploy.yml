@@ -23,4 +23,3 @@ jobs:
                 git pull
                 dotnet restore
                 setsid dotnet run > app.log 2>&1 &
-            
