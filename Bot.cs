@@ -12,7 +12,10 @@ public static class Bot
 
     public static async Task SendMessageTextAsync(string phoneNumber, string message)
     {
-        string url = $"https://graph.facebook.com/v21.0/506317799229765/messages";
+        if (AppSettings.ApiKey is null || AppSettings.MetaApiUriNumber is null || AppSettings.ApiKey is null)
+            throw new WhatsExceptions("Error on AppSettings, something is null");
+
+        string url = $"https://graph.facebook.com/v21.0/{AppSettings.MetaApiUriNumber}/messages";
         Client.DefaultRequestHeaders.Clear();
         Client.DefaultRequestHeaders.Add("Authorization", $"Bearer {AppSettings.ApiKey}");
         phoneNumber = FormatBrazilianPhoneNumber(phoneNumber);
@@ -37,14 +40,11 @@ public static class Bot
 
             if (!response.IsSuccessStatusCode)
             {
-                Console.WriteLine(responseContent);
                 throw new WhatsExceptions(responseContent);
             }
-            Console.WriteLine("send OK");
         }
         catch (Exception ex)
         {
-            Console.WriteLine(ex.ToString());
             throw new WhatsExceptions($"Send ERR {ex.Message}");
         }
     }
