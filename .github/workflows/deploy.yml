@@ -14,12 +14,12 @@ jobs:
       - name: Update code and run dotnet on VPS
         uses: appleboy/ssh-action@v0.1.5
         with:
-          host: ${{ secrets.SSH_HOST }}
-          username: root
-          password: ${{ secrets.SSH_PASS }}
-          script: |
-            cd /home/github/WhatsTodo
-            pkill -f "dotnet"
-            git pull
-            dotnet restore
-            nohup dotnet run > app.log 2>&1 &
+            host: ${{ secrets.SSH_HOST }}
+            username: root
+            password: ${{ secrets.SSH_PASS }}
+            script: |
+                cd /home/github/WhatsTodo
+                pkill -f "dotnet" || echo "Nenhum processo dotnet em execução"
+                git pull
+                dotnet restore
+                setsid dotnet run > app.log 2>&1 &
