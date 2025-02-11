@@ -100,7 +100,6 @@ public static class Processor
 
     public static void ProcessorHandler(dynamic message)
     {
-        Console.WriteLine(message);
         if (!Chats.ContainsKey(message.User))
         {
             Chats[message.User] = ContextState.InContext;
@@ -108,8 +107,7 @@ public static class Processor
             return;
         }
 
-        if (!message.Text.StartsWith("/"))
-            return;
+        if (!message.Text.StartsWith("/")) return;
 
         string text = message.Text;
         var command = text.Split(' ')[0].ToLower();
@@ -130,19 +128,19 @@ public static class Processor
                             message.User,
                             $"Já existe uma tarefa ativa com o título '{taskCommand?.Title}'. Por favor, escolha um título diferente ou edite a tarefa existente usando /edittask."
                         );
-                        return;
                     }
-
-                    if (ValidateAndAddTask(taskCommand, message.User))
+                    else if (!ValidateAndAddTask(taskCommand, message.User))
+                    {
+                        Bot.SendMessageTextAsync(message.User, Resources.FormatInvalid);
+                    }
+                    else
                     {
                         Bot.SendMessageTextAsync(
                             message.User,
                             $"Task criada com sucesso!\nTítulo: {taskCommand?.Title}\nDescrição: {taskCommand?.Description}\nHorário: {taskCommand?.Time}"
                         );
-                        return;
                     }
-
-                    Bot.SendMessageTextAsync(message.User, Resources.FormatInvalid);
+                    break;
                 }
                 catch (Exception)
                 {
@@ -161,14 +159,13 @@ public static class Processor
                             message.User,
                             $"Task atualizada com sucesso!\nTítulo: {taskCommand.Title}\nNova Descrição: {taskCommand.Description}\nNovo Horário: {taskCommand.Time}"
                         );
+                        return;
                     }
-                    else
-                    {
-                        Bot.SendMessageTextAsync(
-                            message.User,
-                            "Tarefa não encontrada ou formato inválido. Use /ajuda para mais informações."
-                        );
-                    }
+                    Bot.SendMessageTextAsync(
+                        message.User,
+                        "Tarefa não encontrada ou formato inválido. Use /ajuda para mais informações."
+                    );
+                    break;
                 }
                 catch (Exception)
                 {
@@ -184,7 +181,7 @@ public static class Processor
                     return;
                 }
 
-                var taskList = "Suas tarefas pendentes:\n\n";
+                string? taskList = "Suas tarefas pendentes:\n\n";
                 foreach (var task in tasks)
                 {
                     taskList += $"📌 *{task.Title}*\n";
@@ -206,14 +203,13 @@ public static class Processor
                             message.User,
                             $"Tarefa '{taskTitle}' removida com sucesso!"
                         );
+                        return;
                     }
-                    else
-                    {
-                        Bot.SendMessageTextAsync(
-                            message.User,
-                            "Tarefa não encontrada ou já foi concluída. Use /listtask para ver suas tarefas pendentes."
-                        );
-                    }
+                    Bot.SendMessageTextAsync(
+                        message.User,
+                        "Tarefa não encontrada ou já foi concluída. Use /listtask para ver suas tarefas pendentes."
+                    );
+                    break;
                 }
                 catch (Exception)
                 {
@@ -235,7 +231,6 @@ public static class Processor
                 break;
 
             default:
-                Bot.SendMessageTextAsync(message.User, Resources.CommandDontFind);
                 break;
         }
     }
