@@ -18,8 +18,8 @@ jobs:
           password: ${{ secrets.SSH_PASS }}
           script: |
             cd /home/github/WhatsTodo
-            pkill -f "dotnet" || true
+            killall dotnet
             git pull
             dotnet restore
-            dotnet build --configuration Release
+            dotnet build
             nohup dotnet run --configuration Release > app.log 2>&1 &
