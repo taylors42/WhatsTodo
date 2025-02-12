@@ -5,11 +5,12 @@ namespace WhatsTodo.Database;
 
 public static class Database
 {
+    private static string DatabaseLocal = "Data Source=whatstodo.db";
     public static bool CreateDb()
     {
         try
         {
-            using SqliteConnection connection = new("Data Source=Database/whatstodo.db");
+            using SqliteConnection connection = new(DatabaseLocal);
             connection.Open();
 
             using var command = connection.CreateCommand();
@@ -53,7 +54,7 @@ public static class Database
     {
         try
         {
-            using var connection = new SqliteConnection("Data Source=Database/whatstodo.db");
+            using var connection = new SqliteConnection(DatabaseLocal);
             connection.Open();
 
             using var command = connection.CreateCommand();
@@ -97,7 +98,7 @@ public static class Database
     {
         try
         {
-            using var connection = new SqliteConnection("Data Source=Database/whatstodo.db");
+            using var connection = new SqliteConnection(DatabaseLocal);
             connection.Open();
 
             using var command = connection.CreateCommand();
@@ -130,7 +131,7 @@ public static class Database
     {
         try
         {
-            using var connection = new SqliteConnection("Data Source=Database/whatstodo.db");
+            using var connection = new SqliteConnection(DatabaseLocal);
             connection.Open();
 
             using (var command = connection.CreateCommand())
@@ -194,7 +195,7 @@ public static class Database
     {
         try
         {
-            using var connection = new SqliteConnection("Data Source=Database/whatstodo.db");
+            using var connection = new SqliteConnection(DatabaseLocal);
 
             var todoList = new List<object>();
 
@@ -235,7 +236,7 @@ public static class Database
     {
         try
         {
-            using var connection = new SqliteConnection("Data Source=Database/whatstodo.db");
+            using var connection = new SqliteConnection(DatabaseLocal);
             connection.Open();
 
             using var command = connection.CreateCommand();
@@ -262,7 +263,7 @@ public static class Database
     {
         try
         {
-            using var connection = new SqliteConnection("Data Source=Database/whatstodo.db");
+            using var connection = new SqliteConnection(DatabaseLocal);
             connection.Open();
 
             // Get current time in Brazil timezone
@@ -316,7 +317,7 @@ public static class Database
     {
         try
         {
-            using var connection = new SqliteConnection("Data Source=Database/whatstodo.db");
+            using var connection = new SqliteConnection(DatabaseLocal);
             connection.Open();
 
             using var command = connection.CreateCommand();
