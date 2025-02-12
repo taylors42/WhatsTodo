@@ -170,7 +170,7 @@ public static class Processor
                 }
                 catch (Exception)
                 {
-                    Bot.SendMessageTextAsync(message.User, Resources.FormatInvalid);
+                    Bot.SendMessageTextAsync(message.User, Resources.ErrorEdittask);
                 }
                 break;
 
@@ -214,7 +214,7 @@ public static class Processor
                 }
                 catch (Exception)
                 {
-                    Bot.SendMessageTextAsync(message.User, Resources.FormatInvalid);
+                    Bot.SendMessageTextAsync(message.User, Resources.ErrorDeletetask);
                 }
                 break;
 
