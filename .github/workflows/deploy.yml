@@ -1,0 +1,25 @@
+name: Deploy on VPS
+
+on:
+  push:
+    branches: main
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    environment: prod
+
+    steps:
+      - name: Deploy to VPS
+        uses: appleboy/ssh-action@v0.1.5
+        with:
+          host: ${{ secrets.SSH_HOST }}
+          username: root
+          password: ${{ secrets.SSH_PASS }}
+          script: |
+            cd /home/github/WhatsTodo
+            killall dotnet
+            git pull
+            dotnet restore
+            dotnet build
+            nohup dotnet run --configuration Release > app.log 2>&1 &
