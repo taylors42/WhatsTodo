@@ -1,4 +1,4 @@
-name: Deploy on vps
+name: Deploy on VPS
 
 on:
   push:
@@ -10,16 +10,102 @@ jobs:
     environment: prod
 
     steps:
-      # Conecta ao VPS e sincroniza o repositório
-      - name: Update code and run dotnet on VPS
+      - name: Deploy to VPS
         uses: appleboy/ssh-action@v0.1.5
         with:
-            host: ${{ secrets.SSH_HOST }}
-            username: root
-            password: ${{ secrets.SSH_PASS }}
-            script: |
-                cd /home/github/WhatsTodo
-                pkill -f "dotnet" || echo "Nenhum processo dotnet em execução"
-                git pull
-                dotnet restore
-                setsid dotnet run > app.log 2>&1 &
+          host: ${{ secrets.SSH_HOST }}
+          username: root
+          password: ${{ secrets.SSH_PASS }}
+          script: |
+            # Ativa modo verbose e para execução em caso de erro
+            set -ex
+            
+            # Define variáveis
+            APP_DIR="/home/github/WhatsTodo"
+            LOG_FILE="$APP_DIR/app.log"
+            
+            # Entra no diretório da aplicação
+            cd $APP_DIR || {
+                echo "Failed to enter directory $APP_DIR"
+                exit 1
+            }
+            
+            echo "Starting deployment at $(date)"
+            
+            # Backup do código atual
+            echo "Creating backup..."
+            BACKUP_DIR="$APP_DIR/backup_$(date +%Y%m%d_%H%M%S)"
+            cp -r . $BACKUP_DIR
+            
+            # Para a aplicação atual
+            echo "Stopping current application..."
+            if pgrep -f "dotnet"; then
+                pkill -f "dotnet"
+                # Aguarda o processo terminar
+                for i in {1..30}; do
+                    if ! pgrep -f "dotnet"; then
+                        break
+                    fi
+                    sleep 1
+                done
+                # Força o encerramento se ainda estiver rodando
+                if pgrep -f "dotnet"; then
+                    pkill -9 -f "dotnet"
+                fi
+            fi
+            
+            # Atualiza o código
+            echo "Updating code..."
+            git fetch --all
+            git reset --hard origin/main
+            
+            # Limpa e restaura pacotes
+            echo "Restoring packages..."
+            dotnet clean
+            dotnet restore --force
+            
+            # Build da aplicação
+            echo "Building application..."
+            dotnet build --configuration Release
+            
+            # Inicia a aplicação
+            echo "Starting application..."
+            nohup dotnet run --configuration Release > $LOG_FILE 2>&1 &
+            
+            # Aguarda a aplicação iniciar
+            echo "Waiting for application to start..."
+            sleep 15
+            
+            # Verifica se a aplicação está rodando
+            if ! pgrep -f "dotnet"; then
+                echo "Application failed to start. Last 50 lines of log:"
+                tail -n 50 $LOG_FILE
+                # Restaura backup em caso de falha
+                echo "Restoring from backup..."
+                rm -rf $APP_DIR/*
+                cp -r $BACKUP_DIR/* $APP_DIR/
+                exit 1
+            fi
+            
+            # Verifica se a aplicação está respondendo
+            for i in {1..5}; do
+                if curl -s http://localhost:5000/health || curl -s http://localhost:5001/health; then
+                    echo "Application is responding!"
+                    break
+                fi
+                if [ $i -eq 5 ]; then
+                    echo "Application is not responding. Rolling back..."
+                    pkill -f "dotnet"
+                    rm -rf $APP_DIR/*
+                    cp -r $BACKUP_DIR/* $APP_DIR/
+                    nohup dotnet run --configuration Release > $LOG_FILE 2>&1 &
+                    exit 1
+                fi
+                sleep 5
+            done
+            
+            # Limpa backups antigos (mantém os últimos 5)
+            cd $APP_DIR
+            ls -td backup_* | tail -n +6 | xargs -r rm -rf
+            
+            echo "Deployment completed successfully at $(date)"
