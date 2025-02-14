@@ -6,6 +6,7 @@ public class TaskCommand
     public string? Title { get; set; }
     public string? Description { get; set; }
     public string? Time { get; set; }
+    public bool Success { get; set; }
 }
 
 public static class Processor
@@ -20,11 +21,74 @@ public static class Processor
         var title = withoutTime.Split(' ')[0];
         var description = withoutTime.Substring(title.Length).Trim();
 
+        try
+        {
+            if (!TimeSpan.TryParse(time, out TimeSpan notificationTime))
+                return new TaskCommand
+                {
+                    Success = false
+                };
+        }
+        catch
+        {
+            return new TaskCommand
+            {
+                Success = false
+            };
+        }
+        if (string.IsNullOrEmpty(title) || string.IsNullOrEmpty(description) || string.IsNullOrEmpty(time))
+        {
+            return new TaskCommand
+            {
+                Success = false
+            };
+        }
+
         return new TaskCommand
         {
             Title = title,
             Description = description,
-            Time = time
+            Time = time,
+            Success = true
+        };
+    }
+
+    private static TaskCommand ParseEditTaskCommand(ref string message)
+    {
+        var withoutCommand = message.Substring(message.IndexOf(' ') + 1);
+        var time = withoutCommand.Substring(withoutCommand.Length - 5);
+        var withoutTime = withoutCommand.Substring(0, withoutCommand.Length - 5).Trim();
+        var title = withoutTime.Split(' ')[0];
+        var description = withoutTime.Substring(title.Length).Trim();
+        try
+        {
+            if (!TimeSpan.TryParse(time, out TimeSpan notificationTime))
+                return new TaskCommand
+                {
+                    Success = false
+                };
+        }
+        catch
+        {
+            return new TaskCommand
+            {
+                Success = false
+            };
+        }
+        if (string.IsNullOrEmpty(title) || string.IsNullOrEmpty(description) || string.IsNullOrEmpty(time))
+        {
+            return new TaskCommand
+            {
+                Success = false
+            };
+        }
+
+        return new TaskCommand
+        {
+            Title = title,
+            Description = description,
+            Time = time,
+            Success = true
         };
     }
 
@@ -67,6 +131,9 @@ public static class Processor
             if (notificationTime < DateTime.Now.TimeOfDay)
                 notificationDate = notificationDate.AddDays(1);
 
+            if (string.IsNullOrEmpty(taskCommand.Title) || string.IsNullOrEmpty(taskCommand.Description))
+                return false;
+
             return Database.Database.UpdateTask(
                 taskCommand.Title,
                 taskCommand.Description,
@@ -82,22 +149,6 @@ public static class Processor
         }
     }
 
-    private static TaskCommand ParseEditTaskCommand(ref string message)
-    {
-        var withoutCommand = message.Substring(message.IndexOf(' ') + 1);
-        var time = withoutCommand.Substring(withoutCommand.Length - 5);
-        var withoutTime = withoutCommand.Substring(0, withoutCommand.Length - 5).Trim();
-        var title = withoutTime.Split(' ')[0];
-        var description = withoutTime.Substring(title.Length).Trim();
-
-        return new TaskCommand
-        {
-            Title = title,
-            Description = description,
-            Time = time
-        };
-    }
-
     public static void ProcessorHandler(dynamic message)
     {
         if (!Chats.ContainsKey(message.User))
@@ -106,13 +157,13 @@ public static class Processor
             Bot.SendMessageTextAsync(message.User, Resources.FirstUserMessage);
             return;
         }
-
-        if (!message.Text.StartsWith("/")) return;
+        
+        if (!message.Text.StartsWith("/")) 
+            return;
 
         string text = message.Text;
         string command = text.Split(' ')[0].ToLower();
-        // "taylor0 de1 souza2 ferreira3"
-        // /adtask titulo descricao mais descricao 13:50
+
         switch (command)
         {
             case "/addtask":
@@ -120,27 +171,31 @@ public static class Processor
                 {
                     var taskCommand = ParseAddTaskCommand(ref text);
 
+                    if (!taskCommand.Success)
+                    {
+                        Bot.SendMessageTextAsync(message.User, Resources.FormatInvalid);
+                        return;
+                    }
+
                     taskCommand.Title = taskCommand?.Title?.Trim();
                     var normalizedTitle = taskCommand?.Title?.ToLowerInvariant();
+                    bool TaskExistsResult = Database.Database.TaskExists(normalizedTitle, message.User);
 
-                    if (Database.Database.TaskExists(normalizedTitle, message.User))
-                    {
+                    if (TaskExistsResult)
                         Bot.SendMessageTextAsync(
                             message.User,
                             $"Já existe uma tarefa ativa com o título '{taskCommand?.Title}'. Por favor, escolha um título diferente ou edite a tarefa existente usando /edittask."
                         );
-                    }
+
                     else if (!ValidateAndAddTask(taskCommand, message.User))
-                    {
                         Bot.SendMessageTextAsync(message.User, Resources.ErrorAddtask);
-                    }
+
                     else
-                    {
                         Bot.SendMessageTextAsync(
                             message.User,
                             $"Task criada com sucesso!\nTítulo: {taskCommand?.Title}\nDescrição: {taskCommand?.Description}\nHorário: {taskCommand?.Time}"
                         );
-                    }
+
                     break;
                 }
                 catch (Exception)
@@ -150,35 +205,32 @@ public static class Processor
                 break;
 
             case "/edittask":
-                try
-                {
-                    var taskCommand = ParseEditTaskCommand(ref text);
+                var editTaskCommand = ParseEditTaskCommand(ref text);
 
-                    if (ValidateAndUpdateTask(taskCommand, message.User))
-                    {
-                        Bot.SendMessageTextAsync(
-                            message.User,
-                            $"Task atualizada com sucesso!\nTítulo: {taskCommand.Title}\nNova Descrição: {taskCommand.Description}\nNovo Horário: {taskCommand.Time}"
-                        );
-                        return;
-                    }
+                if (!editTaskCommand.Success)
+                {
                     Bot.SendMessageTextAsync(
                         message.User,
-                        "Tarefa não encontrada ou formato inválido. Use /ajuda para mais informações."
+                        Resources.ErrorEdittask
                     );
-                    break;
+                    return;
                 }
-                catch (Exception)
+                if (ValidateAndUpdateTask(editTaskCommand, message.User))
                 {
-                    Bot.SendMessageTextAsync(message.User, Resources.ErrorEdittask);
+                    Bot.SendMessageTextAsync(
+                        message.User,
+                        $"Task atualizada com sucesso!\nTítulo: {editTaskCommand.Title}\nNova Descrição: {editTaskCommand.Description}\nNovo Horário: {editTaskCommand.Time}"
+                    );
+                    return;
                 }
                 break;
 
             case "/listtask":
                 List<dynamic> tasks = Database.Database.GetUserTasks(message.User);
+
                 if (tasks.Count == 0)
                 {
-                    Bot.SendMessageTextAsync(message.User, "Você não possui tarefas pendentes.");
+                    Bot.SendMessageTextAsync(message.User, Resources.DontHaveTask);
                     return;
                 }
 
@@ -198,18 +250,18 @@ public static class Processor
                 {
                     var taskTitle = message.Text.Substring(message.Text.IndexOf(' ') + 1).Trim();
 
-                    if (Database.Database.RemoveTask(taskTitle, message.User))
-                    {
+                    bool taskExistsAndBeRemoved = Database.Database.RemoveTask(taskTitle, message.User);
+
+                    if (!taskExistsAndBeRemoved)
+                        Bot.SendMessageTextAsync(
+                            message.User,
+                            "Tarefa não encontrada ou já foi concluída. Use /listtask para ver suas tarefas pendentes."
+                        );
+                    else
                         Bot.SendMessageTextAsync(
                             message.User,
                             $"Tarefa '{taskTitle}' removida com sucesso!"
                         );
-                        return;
-                    }
-                    Bot.SendMessageTextAsync(
-                        message.User,
-                        "Tarefa não encontrada ou já foi concluída. Use /listtask para ver suas tarefas pendentes."
-                    );
                     break;
                 }
                 catch (Exception)
