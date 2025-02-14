@@ -21,11 +21,74 @@ public static class Processor
         var title = withoutTime.Split(' ')[0];
         var description = withoutTime.Substring(title.Length).Trim();
 
+        try
+        {
+            if (!TimeSpan.TryParse(time, out TimeSpan notificationTime))
+                return new TaskCommand
+                {
+                    Success = false
+                };
+        }
+        catch
+        {
+            return new TaskCommand
+            {
+                Success = false
+            };
+        }
+        if (string.IsNullOrEmpty(title) || string.IsNullOrEmpty(description) || string.IsNullOrEmpty(time))
+        {
+            return new TaskCommand
+            {
+                Success = false
+            };
+        }
+
         return new TaskCommand
         {
             Title = title,
             Description = description,
-            Time = time
+            Time = time,
+            Success = true
+        };
+    }
+
+    private static TaskCommand ParseEditTaskCommand(ref string message)
+    {
+        var withoutCommand = message.Substring(message.IndexOf(' ') + 1);
+        var time = withoutCommand.Substring(withoutCommand.Length - 5);
+        var withoutTime = withoutCommand.Substring(0, withoutCommand.Length - 5).Trim();
+        var title = withoutTime.Split(' ')[0];
+        var description = withoutTime.Substring(title.Length).Trim();
+        try
+        {
+            if (!TimeSpan.TryParse(time, out TimeSpan notificationTime))
+                return new TaskCommand
+                {
+                    Success = false
+                };
+        }
+        catch
+        {
+            return new TaskCommand
+            {
+                Success = false
+            };
+        }
+        if (string.IsNullOrEmpty(title) || string.IsNullOrEmpty(description) || string.IsNullOrEmpty(time))
+        {
+            return new TaskCommand
+            {
+                Success = false
+            };
+        }
+
+        return new TaskCommand
+        {
+            Title = title,
+            Description = description,
+            Time = time,
+            Success = true
         };
     }
 
@@ -86,45 +149,6 @@ public static class Processor
         }
     }
 
-    private static TaskCommand ParseEditTaskCommand(ref string message)
-    {
-        var withoutCommand = message.Substring(message.IndexOf(' ') + 1);
-        var time = withoutCommand.Substring(withoutCommand.Length - 5);
-        var withoutTime = withoutCommand.Substring(0, withoutCommand.Length - 5).Trim();
-        var title = withoutTime.Split(' ')[0];
-        var description = withoutTime.Substring(title.Length).Trim();
-        try
-        {
-            if (!TimeSpan.TryParse(time, out TimeSpan notificationTime))
-                return new TaskCommand
-                {
-                    Success = false
-                };
-        }
-        catch
-        {
-            return new TaskCommand
-            {
-                Success = false
-            };
-        }
-        if (string.IsNullOrEmpty(title) || string.IsNullOrEmpty(description) || string.IsNullOrEmpty(time))
-        {
-            return new TaskCommand
-            {
-                Success = false
-            };
-        }
-
-        return new TaskCommand
-        {
-            Title = title,
-            Description = description,
-            Time = time,
-            Success = true
-        };
-    }
-
     public static void ProcessorHandler(dynamic message)
     {
         if (!Chats.ContainsKey(message.User))
@@ -146,6 +170,12 @@ public static class Processor
                 try
                 {
                     var taskCommand = ParseAddTaskCommand(ref text);
+
+                    if (!taskCommand.Success)
+                    {
+                        Bot.SendMessageTextAsync(message.User, Resources.FormatInvalid);
+                        return;
+                    }
 
                     taskCommand.Title = taskCommand?.Title?.Trim();
                     var normalizedTitle = taskCommand?.Title?.ToLowerInvariant();
@@ -223,18 +253,15 @@ public static class Processor
                     bool taskExistsAndBeRemoved = Database.Database.RemoveTask(taskTitle, message.User);
 
                     if (!taskExistsAndBeRemoved)
-                    {
                         Bot.SendMessageTextAsync(
                             message.User,
                             "Tarefa não encontrada ou já foi concluída. Use /listtask para ver suas tarefas pendentes."
                         );
-                        return;
-                    }
-
-                    Bot.SendMessageTextAsync(
-                        message.User,
-                        $"Tarefa '{taskTitle}' removida com sucesso!"
-                    );
+                    else
+                        Bot.SendMessageTextAsync(
+                            message.User,
+                            $"Tarefa '{taskTitle}' removida com sucesso!"
+                        );
                     break;
                 }
                 catch (Exception)
