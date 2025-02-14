@@ -39,8 +39,8 @@ public static class Database
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"Erro ao criar banco de dados: {ex.Message}");
             return false;
+            throw new Exception($"Erro ao criar banco de dados: {ex.Message}");
         }
     }
 
@@ -172,7 +172,6 @@ public static class Database
 
                 if (reader.HasRows)
                 {
-                    Console.WriteLine("Found similar titles:");
                     while (reader.Read())
                     {
                         Console.WriteLine($"- {reader.GetString(0)}");
@@ -181,7 +180,6 @@ public static class Database
                 }
             }
 
-            Console.WriteLine("No similar titles found");
             return false;
         }
         catch (Exception ex)
@@ -266,16 +264,13 @@ public static class Database
             using var connection = new SqliteConnection(DatabaseLocal);
             connection.Open();
 
-            // Get current time in Brazil timezone
             TimeZoneInfo brasiliaTimeZone;
             try
             {
-                // Windows timezone ID
                 brasiliaTimeZone = TimeZoneInfo.FindSystemTimeZoneById("E. South America Standard Time");
             }
             catch
             {
-                // Linux timezone ID
                 brasiliaTimeZone = TimeZoneInfo.FindSystemTimeZoneById("America/Sao_Paulo");
             }
 
