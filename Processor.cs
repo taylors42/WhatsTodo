@@ -230,7 +230,7 @@ public static class Processor
 
                 if (tasks.Count == 0)
                 {
-                    Bot.SendMessageTextAsync(message.User, "Você não possui tarefas pendentes.");
+                    Bot.SendMessageTextAsync(message.User, Resources.DontHaveTask);
                     return;
                 }
 
