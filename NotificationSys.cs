@@ -58,7 +58,8 @@ public static class NotificationSystem
                 foreach (var task in tasks)
                 {
                     var formattedTime = nowInBrasilia.ToString("dd/MM/yyyy HH:mm");
-                    var message = $"🔔 Tarefa Agendada!\n\n📌 *{task.Title}*\n📝 {task.Description}\n⏰ {formattedTime}";
+                    var message =
+                        $"🔔 Tarefa Agendada!\n\n📌 *{task.Title}*\n📝 {task.Description}\n⏰ {formattedTime}";
                     await Bot.SendMessageTextAsync(task.UserPhone, message);
                     await Database.Database.MarkNotificationSent(task.Id, nowInBrasilia);
                 }

@@ -10,7 +10,6 @@ public static class Program
             throw new WhatsExceptions("Error creating database");
 
         var builder = WebApplication.CreateBuilder(args);
-
         AppSettings.WebhookVerifyToken = builder.Configuration["WebhookVerifyToken"];
         AppSettings.ApiKey = builder.Configuration["ApiKey"];
         AppSettings.MetaApiUriNumber = builder.Configuration["MetaApiUriNumber"];
@@ -25,10 +24,7 @@ public static class Program
         app.Urls.Add("https://localhost:82");
         app.MapGet("/", () => Results.Ok(new { result = "API OK" }));
 
-        app.Lifetime.ApplicationStopping.Register(() => 
-        {
-            NotificationSystem.Stop();
-        });
+        app.Lifetime.ApplicationStopping.Register(NotificationSystem.Stop);
 
         await app.RunAsync();
     }
