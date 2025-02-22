@@ -14,7 +14,9 @@ public static class Processor
 {
     private static Dictionary<string, ContextState> Chats { get; set; } = [];
 
-    public static TaskCommand ParseAddTaskCommand(ref string message)
+    #region ParseTask
+
+    private static TaskCommand ParseAddTaskCommand(ref string message)
     {
         var withoutCommand = message.Substring(message.IndexOf(' ') + 1);
         var time = withoutCommand.Substring(withoutCommand.Length - 5);
@@ -93,6 +95,10 @@ public static class Processor
         };
     }
 
+    #endregion
+
+    #region ValidateTask
+
     private static bool ValidateAndAddTask(TaskCommand taskCommand, string userPhone)
     {
         try
@@ -150,7 +156,9 @@ public static class Processor
         }
     }
 
-    public static void ProcessorHandler(dynamic message)
+    #endregion
+
+    public static void Handler(dynamic message)
     {
         if (!Chats.ContainsKey(message.User))
         {
@@ -158,135 +166,136 @@ public static class Processor
             Bot.SendMessageTextAsync(message.User, Resources.FirstUserMessage);
             return;
         }
-        
+
         if (!message.Text.StartsWith("/"))
             return;
 
         string text = message.Text;
         string command = text.Split(' ')[0].ToLower();
-        
-        switch (command)
+
+        if (Commands.AddCommand.Split(",").Any(c => command.Contains(c.Trim())))
         {
-            case "/addtask" or "/add" or "/new":
-                try
-                {
-                    var taskCommand = ParseAddTaskCommand(ref text);
+            try
+            {
+                var taskCommand = ParseAddTaskCommand(ref text);
 
-                    if (!taskCommand.Success)
-                    {
-                        Bot.SendMessageTextAsync(message.User, Resources.FormatInvalid);
-                        return;
-                    }
-
-                    taskCommand.Title = taskCommand?.Title?.Trim();
-                    var normalizedTitle = taskCommand?.Title?.ToLowerInvariant();
-                    bool TaskExistsResult = Database.Database.TaskExists(normalizedTitle, message.User);
-
-                    if (TaskExistsResult)
-                        Bot.SendMessageTextAsync(
-                            message.User,
-                            $"Já existe uma tarefa ativa com o título '{taskCommand?.Title}'. Por favor, escolha um título diferente ou edite a tarefa existente usando /edittask."
-                        );
-
-                    else if (!ValidateAndAddTask(taskCommand, message.User))
-                        Bot.SendMessageTextAsync(message.User, Resources.ErrorAddtask);
-
-                    else
-                        Bot.SendMessageTextAsync(
-                            message.User,
-                            $"Task criada com sucesso!\nTítulo: {taskCommand?.Title}\nDescrição: {taskCommand?.Description}\nHorário: {taskCommand?.Time}"
-                        );
-
-                    break;
-                }
-                catch (Exception)
+                if (!taskCommand.Success)
                 {
                     Bot.SendMessageTextAsync(message.User, Resources.FormatInvalid);
+                    return;
                 }
-                break;
 
-            case "/edittask":
-                var editTaskCommand = ParseEditTaskCommand(ref text);
+                taskCommand.Title = taskCommand?.Title?.Trim();
+                var normalizedTitle = taskCommand?.Title?.ToLowerInvariant();
+                bool TaskExistsResult = Database.Database.TaskExists(normalizedTitle, message.User);
 
-                if (!editTaskCommand.Success)
+                if (TaskExistsResult)
                 {
                     Bot.SendMessageTextAsync(
                         message.User,
-                        Resources.ErrorEdittask
+                        $"Já existe uma tarefa ativa com o título '{taskCommand?.Title}'. Por favor, escolha um título diferente ou edite a tarefa existente usando /edittask."
                     );
-                    return;
                 }
-                if (ValidateAndUpdateTask(editTaskCommand, message.User))
+                else if (!ValidateAndAddTask(taskCommand, message.User))
+                {
+                    Bot.SendMessageTextAsync(message.User, Resources.ErrorAddtask);
+                }
+                else
                 {
                     Bot.SendMessageTextAsync(
                         message.User,
-                        $"Task atualizada com sucesso!\nTítulo: {editTaskCommand.Title}\nNova Descrição: {editTaskCommand.Description}\nNovo Horário: {editTaskCommand.Time}"
+                        $"Task criada com sucesso!\nTítulo: {taskCommand?.Title}\nDescrição: {taskCommand?.Description}\nHorário: {taskCommand?.Time}"
                     );
-                    return;
                 }
-                break;
+            
+            }
+            catch (Exception)
+            {
+                Bot.SendMessageTextAsync(message.User, Resources.FormatInvalid);
+            }
+        }
+        else if (Commands.EditCommand.Split(",").Any(c => command.Contains(c.Trim())))
+        {
+            var editTaskCommand = ParseEditTaskCommand(ref text);
 
-            case "/listtask":
-                List<dynamic> tasks = Database.Database.GetUserTasks(message.User);
-
-                if (tasks.Count == 0)
-                {
-                    Bot.SendMessageTextAsync(message.User, Resources.DontHaveTask);
-                    return;
-                }
-
-                string? taskList = "Suas tarefas pendentes:\n\n";
-                foreach (var task in tasks)
-                {
-                    taskList += $"📌 *{task.Title}*\n";
-                    taskList += $"📝 {task.Description}\n";
-                    taskList += $"⏰ {task.NotificationDate:dd/MM/yyyy} às {task.NotificationTime:hh\\:mm}\n\n";
-                }
-
-                Bot.SendMessageTextAsync(message.User, taskList);
-                break;
-
-            case "/deletetask":
-                try
-                {
-                    var taskTitle = message.Text.Substring(message.Text.IndexOf(' ') + 1).Trim();
-
-                    bool taskExistsAndBeRemoved = Database.Database.RemoveTask(taskTitle, message.User);
-
-                    if (!taskExistsAndBeRemoved)
-                        Bot.SendMessageTextAsync(
-                            message.User,
-                            "Tarefa não encontrada ou já foi concluída. Use /listtask para ver suas tarefas pendentes."
-                        );
-                    else
-                        Bot.SendMessageTextAsync(
-                            message.User,
-                            $"Tarefa '{taskTitle}' removida com sucesso!"
-                        );
-                    break;
-                }
-                catch (Exception)
-                {
-                    Bot.SendMessageTextAsync(message.User, Resources.ErrorDeletetask);
-                }
-                break;
-
-            case "/creditos":
+            if (!editTaskCommand.Success)
+            {
+                Bot.SendMessageTextAsync(message.User, Resources.ErrorEdittask);
+                return;
+            }
+            if (ValidateAndUpdateTask(editTaskCommand, message.User))
+            {
                 Bot.SendMessageTextAsync(
                     message.User,
-                    "WhatsTodo - Desenvolvido pela equipe TC\n" +
-                    "Versão 0.0.1 Alpha\n\n" +
-                    "Github: https://github.com/MilyZani"
+                    $"Task atualizada com sucesso!\nTítulo: {editTaskCommand.Title}\nNova Descrição: {editTaskCommand.Description}\nNovo Horário: {editTaskCommand.Time}"
                 );
-                break;
+                return;
+            }
+        }
+        else if (Commands.ListCommand.Split(",").Any(c => command.Contains(c.Trim())))
+        {
+            List<dynamic> tasks = Database.Database.GetUserTasks(message.User);
 
-            case "/help":
-                Bot.SendMessageTextAsync(message.User, Resources.HelpMessageText);
-                break;
+            if (tasks.Count == 0)
+            {
+                Bot.SendMessageTextAsync(message.User, Resources.DontHaveTask);
+                return;
+            }
 
-            default:
-                break;
+            string? taskList = "Suas tarefas pendentes:\n\n";
+            foreach (var task in tasks)
+            {
+                taskList += $"📌 *{task.Title}*\n";
+                taskList += $"📝 {task.Description}\n";
+                taskList += $"⏰ {task.NotificationDate:dd/MM/yyyy} às {task.NotificationTime:hh\\:mm}\n\n";
+            }
+
+            Bot.SendMessageTextAsync(message.User, taskList);
+        }
+        else if (Commands.DeleteCommand.Split(",").Any(c => command.Contains(c.Trim())))
+        {
+            try
+            {
+                var taskTitle = message.Text.Substring(message.Text.IndexOf(' ') + 1).Trim();
+
+                bool taskExistsAndBeRemoved = Database.Database.RemoveTask(taskTitle, message.User);
+
+                if (!taskExistsAndBeRemoved)
+                {
+                    Bot.SendMessageTextAsync(
+                        message.User,
+                        "Tarefa não encontrada ou já foi concluída. Use /listtask para ver suas tarefas pendentes."
+                    );
+                }
+                else
+                {
+                    Bot.SendMessageTextAsync(
+                        message.User,
+                        $"Tarefa '{taskTitle}' removida com sucesso!"
+                    );
+                }
+            }
+            catch (Exception)
+            {
+                Bot.SendMessageTextAsync(message.User, Resources.ErrorDeletetask);
+            }
+        }
+        else if (command == "/creditos")
+        {
+            Bot.SendMessageTextAsync(
+                message.User,
+                "WhatsTodo - Desenvolvido pela equipe TC\n" +
+                "Versão 0.0.1 Alpha\n\n" +
+                "Github: https://github.com/MilyZani"
+            );
+        }
+        else if (Commands.HelpCommand.Split(",").Any(c => command.Contains(c.Trim())))
+        {
+            Bot.SendMessageTextAsync(message.User, Resources.HelpMessageText);
+        }
+        else
+        {
+            Bot.SendMessageTextAsync(message.User, Resources.HelpMessageText);
         }
     }
-
 }

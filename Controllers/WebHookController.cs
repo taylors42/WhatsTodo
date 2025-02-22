@@ -65,7 +65,7 @@ public class WebHookController : ControllerBase
                         if (userMessage is null)
                             continue;
 
-                        Processor.ProcessorHandler(new { User = userNumber, Text = userMessage });
+                        Processor.Handler(new { User = userNumber, Text = userMessage });
                     }
                 }
             }
