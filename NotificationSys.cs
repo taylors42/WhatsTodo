@@ -1,10 +1,11 @@
-﻿using System.Threading;
+using System.Threading;
 
 namespace WhatsTodo;
 
 public static class NotificationSystem
 {
     private static readonly CancellationTokenSource _cancellationTokenSource = new();
+    private const int CHECK_INTERVAL_SECONDS = 10;
 
     public static void Start()
     {
@@ -24,7 +25,19 @@ public static class NotificationSystem
         }
         catch
         {
-            return TimeZoneInfo.FindSystemTimeZoneById("America/Sao_Paulo");
+            try
+            {
+                return TimeZoneInfo.FindSystemTimeZoneById("America/Sao_Paulo");
+            }
+            catch
+            {
+                return TimeZoneInfo.CreateCustomTimeZone(
+                    "Brasilia Standard Time",
+                    TimeSpan.FromHours(-3),
+                    "Brasilia Time",
+                    "Brasilia Standard Time"
+                );
+            }
         }
     }
 
@@ -36,22 +49,33 @@ public static class NotificationSystem
         {
             try
             {
-                var nowInBrasilia = TimeZoneInfo.ConvertTimeFromUtc(DateTime.UtcNow, brasiliaTimeZone);
-                var notifications = Database.Database.GetPendingNotifications();
+                var nowInBrasilia = TimeZoneInfo.ConvertTimeFromUtc(
+                    DateTime.UtcNow,
+                    brasiliaTimeZone
+                );
+                var tasks = Database.Database.GetTasksDueAt(nowInBrasilia);
 
-                foreach (var (userPhone, title, description) in notifications)
+                foreach (var task in tasks)
                 {
-                    var message = $"🔔 Lembrete!\n\n📌 *{title}*\n📝 {description}";
-                    await Bot.SendMessageTextAsync(userPhone, message);
-                    Database.Database.MarkTaskAsCompleted(title, userPhone);
+                    var formattedTime = nowInBrasilia.ToString("dd/MM/yyyy HH:mm");
+                    var message = $"🔔 Tarefa Agendada!\n\n📌 *{task.Title}*\n📝 {task.Description}\n⏰ {formattedTime}";
+                    await Bot.SendMessageTextAsync(task.UserPhone, message);
+                    await Database.Database.MarkNotificationSent(task.Id, nowInBrasilia);
                 }
 
-                await Task.Delay(TimeSpan.FromMinutes(1), _cancellationTokenSource.Token);
+                var nextCheck = nowInBrasilia.AddSeconds(
+                    CHECK_INTERVAL_SECONDS - (nowInBrasilia.Second % CHECK_INTERVAL_SECONDS)
+                );
+                var delayMs = (int)(nextCheck - nowInBrasilia).TotalMilliseconds;
+                await Task.Delay(delayMs, _cancellationTokenSource.Token);
             }
             catch (Exception ex)
             {
                 Console.WriteLine($"Erro no loop de notificações: {ex.Message}");
-                await Task.Delay(TimeSpan.FromSeconds(10), _cancellationTokenSource.Token);
+                await Task.Delay(
+                    TimeSpan.FromSeconds(CHECK_INTERVAL_SECONDS),
+                    _cancellationTokenSource.Token
+                );
             }
         }
     }

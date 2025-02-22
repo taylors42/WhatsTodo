@@ -1,4 +1,5 @@
-﻿using WhatsTodo.Database;
+using WhatsTodo.Database;
+
 namespace WhatsTodo;
 
 public class TaskCommand
@@ -158,15 +159,15 @@ public static class Processor
             return;
         }
         
-        if (!message.Text.StartsWith("/")) 
+        if (!message.Text.StartsWith("/"))
             return;
 
         string text = message.Text;
         string command = text.Split(' ')[0].ToLower();
-
+        
         switch (command)
         {
-            case "/addtask":
+            case "/addtask" or "/add" or "/new":
                 try
                 {
                     var taskCommand = ParseAddTaskCommand(ref text);
@@ -287,4 +288,5 @@ public static class Processor
                 break;
         }
     }
+
 }

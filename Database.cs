@@ -14,33 +14,55 @@ public static class Database
             connection.Open();
 
             using var command = connection.CreateCommand();
+            
             command.CommandText = @"
-                    CREATE TABLE IF NOT EXISTS todos (
-                        id INTEGER PRIMARY KEY AUTOINCREMENT,
-                        title VARCHAR(100) NOT NULL,
-                        description TEXT,
-                        notification_date DATE NOT NULL,
-                        notification_time TIME NOT NULL,
-                        is_completed BOOLEAN DEFAULT FALSE,
-                        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                        user_phone VARCHAR(20) NOT NULL
-                    );
+                CREATE TABLE IF NOT EXISTS todos (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    title VARCHAR(100) NOT NULL,
+                    description TEXT,
+                    notification_date DATE NOT NULL,
+                    notification_time TIME NOT NULL,
+                    is_completed BOOLEAN DEFAULT FALSE,
+                    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                    user_phone VARCHAR(20) NOT NULL
+                );";
+            command.ExecuteNonQuery();
 
-                    CREATE INDEX IF NOT EXISTS idx_notification_datetime 
-                    ON todos(notification_date, notification_time);
-                    
-                    CREATE INDEX IF NOT EXISTS idx_user_phone
-                    ON todos(user_phone);
-                ";
+            command.CommandText = "PRAGMA table_info(todos);";
+            bool hasCompletedAt = false;
+            using (var reader = command.ExecuteReader())
+            {
+                while (reader.Read())
+                {
+                    string columnName = reader.GetString(1);
+                    if (columnName == "completed_at")
+                    {
+                        hasCompletedAt = true;
+                        break;
+                    }
+                }
+            }
 
+            if (!hasCompletedAt)
+            {
+                command.CommandText = "ALTER TABLE todos ADD COLUMN completed_at TIMESTAMP NULL;";
+                command.ExecuteNonQuery();
+            }
+
+            command.CommandText = @"
+                CREATE INDEX IF NOT EXISTS idx_notification_datetime 
+                ON todos(notification_date, notification_time);
+                
+                CREATE INDEX IF NOT EXISTS idx_user_phone
+                ON todos(user_phone);";
             command.ExecuteNonQuery();
 
             return true;
         }
         catch (Exception ex)
         {
+            Console.WriteLine($"Erro ao criar/atualizar banco de dados: {ex.Message}");
             return false;
-            throw new Exception($"Erro ao criar banco de dados: {ex.Message}");
         }
     }
 
@@ -331,6 +353,70 @@ public static class Database
         {
             Console.WriteLine($"Erro ao marcar tarefa como completa: {ex.Message}");
             return false;
+        }
+    }
+
+    public static List<(int Id, string UserPhone, string Title, string Description)> GetTasksDueAt(DateTime currentTime)
+    {
+        var tasks = new List<(int Id, string UserPhone, string Title, string Description)>();
+        
+        try
+        {
+            using var connection = new SqliteConnection(DatabaseLocal);
+            connection.Open();
+
+            using var command = connection.CreateCommand();
+            command.CommandText = @"
+                SELECT id, user_phone, title, description
+                FROM todos
+                WHERE date(notification_date) = date(@date)
+                AND time(notification_time) = time(@time)
+                AND is_completed = 0;";
+
+            command.Parameters.AddWithValue("@date", currentTime.ToString("yyyy-MM-dd"));
+            command.Parameters.AddWithValue("@time", currentTime.ToString("HH:mm"));
+
+            using var reader = command.ExecuteReader();
+            while (reader.Read())
+            {
+                tasks.Add((
+                    reader.GetInt32(0),
+                    reader.GetString(1),
+                    reader.GetString(2),
+                    reader.GetString(3)
+                ));
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Erro ao buscar tarefas para notificação: {ex.Message}");
+        }
+
+        return tasks;
+    }
+
+    public static async Task MarkNotificationSent(int taskId, DateTime sentTime)
+    {
+        try
+        {
+            using var connection = new SqliteConnection(DatabaseLocal);
+            connection.Open();
+
+            using var command = connection.CreateCommand();
+            command.CommandText = @"
+                UPDATE todos 
+                SET is_completed = 1,
+                    completed_at = datetime(@completed_at)
+                WHERE id = @id;";
+
+            command.Parameters.AddWithValue("@id", taskId);
+            command.Parameters.AddWithValue("@completed_at", sentTime.ToString("yyyy-MM-dd HH:mm:ss"));
+
+            await command.ExecuteNonQueryAsync();
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Erro ao marcar notificação como enviada: {ex.Message}");
         }
     }
 }
