@@ -25,6 +25,11 @@ public static class Database
                     is_completed BOOLEAN DEFAULT FALSE,
                     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                     user_phone VARCHAR(20) NOT NULL
+                );
+                
+                CREATE TABLE IF NOT EXISTS users (
+                    phone VARCHAR(20) PRIMARY KEY,
+                    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
                 );";
             command.ExecuteNonQuery();
 
@@ -417,6 +422,46 @@ public static class Database
         catch (Exception ex)
         {
             Console.WriteLine($"Erro ao marcar notificação como enviada: {ex.Message}");
+        }
+    }
+
+    public static bool UserExists(string phone)
+    {
+        try
+        {
+            using SqliteConnection connection = new(DatabaseLocal);
+            connection.Open();
+
+            using var command = connection.CreateCommand();
+            command.CommandText = "SELECT COUNT(*) FROM users WHERE phone = @phone;";
+            command.Parameters.AddWithValue("@phone", phone);
+
+            int count = Convert.ToInt32(command.ExecuteScalar());
+            return count > 0;
+        }
+        catch
+        {
+            return false;
+        }
+    }
+
+    public static bool AddUser(string phone)
+    {
+        try
+        {
+            using SqliteConnection connection = new(DatabaseLocal);
+            connection.Open();
+
+            using var command = connection.CreateCommand();
+            command.CommandText = "INSERT INTO users (phone) VALUES (@phone);";
+            command.Parameters.AddWithValue("@phone", phone);
+
+            command.ExecuteNonQuery();
+            return true;
+        }
+        catch
+        {
+            return false;
         }
     }
 }

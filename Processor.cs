@@ -12,8 +12,6 @@ public class TaskCommand
 
 public static class Processor
 {
-    private static Dictionary<string, ContextState> Chats { get; set; } = [];
-
     #region ParseTask
 
     private static TaskCommand ParseAddTaskCommand(ref string message)
@@ -160,9 +158,9 @@ public static class Processor
 
     public static void Handler(dynamic message)
     {
-        if (!Chats.ContainsKey(message.User))
+        if (!Database.Database.UserExists(message.User))
         {
-            Chats[message.User] = ContextState.InContext;
+            Database.Database.AddUser(message.User);
             Bot.SendMessageTextAsync(message.User, Resources.FirstUserMessage);
             return;
         }
