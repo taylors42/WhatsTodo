@@ -22,7 +22,7 @@ namespace WhatsTodo {
     [global::System.CodeDom.Compiler.GeneratedCodeAttribute("System.Resources.Tools.StronglyTypedResourceBuilder", "17.0.0.0")]
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
     [global::System.Runtime.CompilerServices.CompilerGeneratedAttribute()]
-    public class Resources {
+    internal class Resources {
         
         private static global::System.Resources.ResourceManager resourceMan;
         
@@ -36,7 +36,7 @@ namespace WhatsTodo {
         ///   Returns the cached ResourceManager instance used by this class.
         /// </summary>
         [global::System.ComponentModel.EditorBrowsableAttribute(global::System.ComponentModel.EditorBrowsableState.Advanced)]
-        public static global::System.Resources.ResourceManager ResourceManager {
+        internal static global::System.Resources.ResourceManager ResourceManager {
             get {
                 if (object.ReferenceEquals(resourceMan, null)) {
                     global::System.Resources.ResourceManager temp = new global::System.Resources.ResourceManager("WhatsTodo.Resources", typeof(Resources).Assembly);
@@ -51,7 +51,7 @@ namespace WhatsTodo {
         ///   resource lookups using this strongly typed resource class.
         /// </summary>
         [global::System.ComponentModel.EditorBrowsableAttribute(global::System.ComponentModel.EditorBrowsableState.Advanced)]
-        public static global::System.Globalization.CultureInfo Culture {
+        internal static global::System.Globalization.CultureInfo Culture {
             get {
                 return resourceCulture;
             }
@@ -63,7 +63,7 @@ namespace WhatsTodo {
         /// <summary>
         ///   Looks up a localized string similar to Você não possui tarefas pendentes..
         /// </summary>
-        public static string DontHaveTask {
+        internal static string DontHaveTask {
             get {
                 return ResourceManager.GetString("DontHaveTask", resourceCulture);
             }
@@ -72,7 +72,7 @@ namespace WhatsTodo {
         /// <summary>
         ///   Looks up a localized string similar to ERRO DE COMANDO- Use o formato válido para adicionar uma tarefa, espaçando entre os elementos:/addtask Titulo Descrição Horário (12:00).
         /// </summary>
-        public static string ErrorAddtask {
+        internal static string ErrorAddtask {
             get {
                 return ResourceManager.GetString("ErrorAddtask", resourceCulture);
             }
@@ -81,7 +81,7 @@ namespace WhatsTodo {
         /// <summary>
         ///   Looks up a localized string similar to ERRO DE COMANDO- Use o formato válido para deletar uma tarefa, espaçando entre os elementos:/deletetask Titulo.
         /// </summary>
-        public static string ErrorDeletetask {
+        internal static string ErrorDeletetask {
             get {
                 return ResourceManager.GetString("ErrorDeletetask", resourceCulture);
             }
@@ -90,7 +90,7 @@ namespace WhatsTodo {
         /// <summary>
         ///   Looks up a localized string similar to ERRO DE COMANDO- Use o formato válido para editar uma tarefa, espaçando entre os elementos:/edittask NovoTitulo NovaDescrição NovoHorário(12:00).
         /// </summary>
-        public static string ErrorEdittask {
+        internal static string ErrorEdittask {
             get {
                 return ResourceManager.GetString("ErrorEdittask", resourceCulture);
             }
@@ -99,7 +99,7 @@ namespace WhatsTodo {
         /// <summary>
         ///   Looks up a localized string similar to Para solicitar ajuda digite /help.
         /// </summary>
-        public static string FirstUserMessage {
+        internal static string FirstUserMessage {
             get {
                 return ResourceManager.GetString("FirstUserMessage", resourceCulture);
             }
@@ -108,7 +108,7 @@ namespace WhatsTodo {
         /// <summary>
         ///   Looks up a localized string similar to Formato Invalido, digite /help para obter informações.
         /// </summary>
-        public static string FormatInvalid {
+        internal static string FormatInvalid {
             get {
                 return ResourceManager.GetString("FormatInvalid", resourceCulture);
             }
@@ -134,7 +134,7 @@ namespace WhatsTodo {
         ////créditos
         ///.
         /// </summary>
-        public static string HelpMessageText {
+        internal static string HelpMessageText {
             get {
                 return ResourceManager.GetString("HelpMessageText", resourceCulture);
             }
@@ -143,7 +143,7 @@ namespace WhatsTodo {
         /// <summary>
         ///   Looks up a localized string similar to Tarefa não encontrada. Use /helppara mais informações..
         /// </summary>
-        public static string TaskNotFound {
+        internal static string TaskNotFound {
             get {
                 return ResourceManager.GetString("TaskNotFound", resourceCulture);
             }
