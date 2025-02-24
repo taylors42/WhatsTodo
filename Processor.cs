@@ -25,24 +25,19 @@ public static class Processor
         try
         {
             if (!TimeSpan.TryParse(time, out TimeSpan notificationTime))
-                return new TaskCommand
-                {
-                    Success = false
-                };
+                return new TaskCommand { Success = false };
         }
         catch
         {
-            return new TaskCommand
-            {
-                Success = false
-            };
+            return new TaskCommand { Success = false };
         }
-        if (string.IsNullOrEmpty(title) || string.IsNullOrEmpty(description) || string.IsNullOrEmpty(time))
+        if (
+            string.IsNullOrEmpty(title)
+            || string.IsNullOrEmpty(description)
+            || string.IsNullOrEmpty(time)
+        )
         {
-            return new TaskCommand
-            {
-                Success = false
-            };
+            return new TaskCommand { Success = false };
         }
 
         return new TaskCommand
@@ -50,7 +45,7 @@ public static class Processor
             Title = title,
             Description = description,
             Time = time,
-            Success = true
+            Success = true,
         };
     }
 
@@ -64,24 +59,19 @@ public static class Processor
         try
         {
             if (!TimeSpan.TryParse(time, out TimeSpan notificationTime))
-                return new TaskCommand
-                {
-                    Success = false
-                };
+                return new TaskCommand { Success = false };
         }
         catch
         {
-            return new TaskCommand
-            {
-                Success = false
-            };
+            return new TaskCommand { Success = false };
         }
-        if (string.IsNullOrEmpty(title) || string.IsNullOrEmpty(description) || string.IsNullOrEmpty(time))
+        if (
+            string.IsNullOrEmpty(title)
+            || string.IsNullOrEmpty(description)
+            || string.IsNullOrEmpty(time)
+        )
         {
-            return new TaskCommand
-            {
-                Success = false
-            };
+            return new TaskCommand { Success = false };
         }
 
         return new TaskCommand
@@ -89,69 +79,8 @@ public static class Processor
             Title = title,
             Description = description,
             Time = time,
-            Success = true
+            Success = true,
         };
-    }
-
-    #endregion
-
-    #region ValidateTask
-
-    private static bool ValidateAndAddTask(TaskCommand taskCommand, string userPhone)
-    {
-        try
-        {
-            if (!TimeSpan.TryParse(taskCommand.Time, out TimeSpan notificationTime))
-                return false;
-
-            var notificationDate = DateTime.Today;
-
-            if (notificationTime < DateTime.Now.TimeOfDay)
-                notificationDate = notificationDate.AddDays(1);
-
-            return Database.Database.AddTask(
-                taskCommand.Title,
-                taskCommand.Description,
-                notificationDate,
-                notificationTime,
-                userPhone
-            );
-        }
-        catch (Exception ex)
-        {
-            Console.WriteLine($"Erro ao validar e adicionar tarefa: {ex.Message}");
-            return false;
-        }
-    }
-
-    private static bool ValidateAndUpdateTask(TaskCommand taskCommand, string userPhone)
-    {
-        try
-        {
-            if (!TimeSpan.TryParse(taskCommand.Time, out TimeSpan notificationTime))
-                return false;
-
-            var notificationDate = DateTime.Today;
-
-            if (notificationTime < DateTime.Now.TimeOfDay)
-                notificationDate = notificationDate.AddDays(1);
-
-            if (string.IsNullOrEmpty(taskCommand.Title) || string.IsNullOrEmpty(taskCommand.Description))
-                return false;
-
-            return Database.Database.UpdateTask(
-                taskCommand.Title,
-                taskCommand.Description,
-                notificationDate,
-                notificationTime,
-                userPhone
-            );
-        }
-        catch (Exception ex)
-        {
-            Console.WriteLine($"Erro ao validar e atualizar tarefa: {ex.Message}");
-            return false;
-        }
     }
 
     #endregion
@@ -165,13 +94,10 @@ public static class Processor
             return;
         }
 
-        if (!message.Text.StartsWith("/"))
-            return;
-
         string text = message.Text;
         string command = text.Split(' ')[0].ToLower();
 
-        if (Commands.AddCommand.Split(",").Any(c => command.Contains(c.Trim())))
+        if (Commands.AddCommand.Split(",").Select(c => c.Trim()).Contains(command))
         {
             try
             {
@@ -183,54 +109,89 @@ public static class Processor
                     return;
                 }
 
+                #region NormalizeCommand
+
                 taskCommand.Title = taskCommand?.Title?.Trim();
                 var normalizedTitle = taskCommand?.Title?.ToLowerInvariant();
-                bool TaskExistsResult = Database.Database.TaskExists(normalizedTitle, message.User);
 
+                #endregion
+
+                bool TaskExistsResult = Database.Database.TaskExists(normalizedTitle, message.User);
                 if (TaskExistsResult)
                 {
                     Bot.SendMessageTextAsync(
                         message.User,
                         $"Já existe uma tarefa ativa com o título '{taskCommand?.Title}'. Por favor, escolha um título diferente ou edite a tarefa existente usando /edittask."
                     );
+                    return;
                 }
-                else if (!ValidateAndAddTask(taskCommand, message.User))
+                ValidadeStatus status = ValidationFlow.ValidateAndAddTask(taskCommand, message.User);
+                if (status.CatchError)
                 {
                     Bot.SendMessageTextAsync(message.User, Resources.ErrorAddtask);
                 }
-                else
+                else if (status.SintaxeError)
+                {
+                    Bot.SendMessageTextAsync(message.User, Resources.FormatInvalid);
+                }
+                else if (status.TimeError)
+                {
+                    Bot.SendMessageTextAsync(message.User, Resources.TimeInvalid);
+                }
+                else if (status.TaskResult)
                 {
                     Bot.SendMessageTextAsync(
                         message.User,
                         $"Task criada com sucesso!\nTítulo: {taskCommand?.Title}\nDescrição: {taskCommand?.Description}\nHorário: {taskCommand?.Time}"
                     );
                 }
-            
+                else
+                {
+                    Console.WriteLine("Out of range");
+                }
             }
             catch (Exception)
             {
                 Bot.SendMessageTextAsync(message.User, Resources.FormatInvalid);
             }
         }
-        else if (Commands.EditCommand.Split(",").Any(c => command.Contains(c.Trim())))
+        else if (Commands.EditCommand.Split(",").Select(c => c.Trim()).Contains(command))
         {
-            var editTaskCommand = ParseEditTaskCommand(ref text);
+            TaskCommand editTaskCommand = ParseEditTaskCommand(ref text);
 
             if (!editTaskCommand.Success)
             {
                 Bot.SendMessageTextAsync(message.User, Resources.ErrorEdittask);
                 return;
             }
-            if (ValidateAndUpdateTask(editTaskCommand, message.User))
+
+            ValidadeStatus status = ValidationFlow.ValidateAndUpdateTask(editTaskCommand, message.User);
+            
+            if (status.TaskResult)
             {
                 Bot.SendMessageTextAsync(
                     message.User,
                     $"Task atualizada com sucesso!\nTítulo: {editTaskCommand.Title}\nNova Descrição: {editTaskCommand.Description}\nNovo Horário: {editTaskCommand.Time}"
                 );
-                return;
+            }
+            else if (status.CatchError)
+            {
+                Bot.SendMessageTextAsync(message.User, Resources.ErrorEdittask);
+            }
+            else if (status.SintaxeError)
+            {
+                Bot.SendMessageTextAsync(message.User, Resources.FormatInvalid);
+            }
+            else if (status.TimeError)
+            {
+                Bot.SendMessageTextAsync(message.User, Resources.TimeInvalid);
+            }
+            else
+            {
+                Console.WriteLine("Out of range");
             }
         }
-        else if (Commands.ListCommand.Split(",").Any(c => command.Contains(c.Trim())))
+        else if (Commands.ListCommand.Split(",").Select(c => c.Trim()).Contains(command))
         {
             List<dynamic> tasks = Database.Database.GetUserTasks(message.User);
 
@@ -245,12 +206,13 @@ public static class Processor
             {
                 taskList += $"📌 *{task.Title}*\n";
                 taskList += $"📝 {task.Description}\n";
-                taskList += $"⏰ {task.NotificationDate:dd/MM/yyyy} às {task.NotificationTime:hh\\:mm}\n\n";
+                taskList +=
+                    $"⏰ {task.NotificationDate:dd/MM/yyyy} às {task.NotificationTime:hh\\:mm}\n\n";
             }
 
             Bot.SendMessageTextAsync(message.User, taskList);
         }
-        else if (Commands.DeleteCommand.Split(",").Any(c => command.Contains(c.Trim())))
+        else if (Commands.DeleteCommand.Split(",").Select(c => c.Trim()).Contains(command))
         {
             try
             {
@@ -282,12 +244,12 @@ public static class Processor
         {
             Bot.SendMessageTextAsync(
                 message.User,
-                "WhatsTodo - Desenvolvido pela equipe TC\n" +
-                "Versão 0.0.1 Alpha\n\n" +
-                "Github: https://github.com/MilyZani"
+                "WhatsTodo - Desenvolvido pela equipe TC\n"
+                    + "Versão 0.0.1 Alpha\n\n"
+                    + "Github: https://github.com/MilyZani"
             );
         }
-        else if (Commands.HelpCommand.Split(",").Any(c => command.Contains(c.Trim())))
+        else if (Commands.HelpCommand.Split(",").Select(c => c.Trim()).Contains(command))
         {
             Bot.SendMessageTextAsync(message.User, Resources.HelpMessageText);
         }

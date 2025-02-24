@@ -70,7 +70,7 @@ namespace WhatsTodo {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to ERRO DE COMANDO- Use o formato válido para adicionar uma tarefa, espaçando entre os elementos:/addtask Titulo Descrição Horário (12:00).
+        ///   Looks up a localized string similar to Erro ao criar tarefa.
         /// </summary>
         internal static string ErrorAddtask {
             get {
@@ -141,11 +141,29 @@ namespace WhatsTodo {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to ERRO DE COMANDO- Use o formato válido para adicionar uma tarefa, espaçando entre os elementos:/addtask Titulo Descrição Horário (12:00).
+        /// </summary>
+        internal static string SintaxeError {
+            get {
+                return ResourceManager.GetString("SintaxeError", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Tarefa não encontrada. Use /helppara mais informações..
         /// </summary>
         internal static string TaskNotFound {
             get {
                 return ResourceManager.GetString("TaskNotFound", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Mensagem com tempo Invalido.
+        /// </summary>
+        internal static string TimeInvalid {
+            get {
+                return ResourceManager.GetString("TimeInvalid", resourceCulture);
             }
         }
     }
