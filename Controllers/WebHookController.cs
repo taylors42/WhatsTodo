@@ -1,10 +1,6 @@
 using Microsoft.AspNetCore.Mvc;
-using System.Runtime.InteropServices.JavaScript;
-using System.Linq;
-using System.Configuration;
 using Newtonsoft.Json.Linq;
-using WhatsTodo;
-using static System.Net.Mime.MediaTypeNames;
+
 namespace WhatsTodo.Controllers;
 
 [ApiController]
@@ -15,10 +11,11 @@ public class WebHookController : ControllerBase
     public IActionResult Get(
         [FromQuery(Name = "hub.mode")] string mode,
         [FromQuery(Name = "hub.verify_token")] string token,
-        [FromQuery(Name = "hub.challenge")] string challenge)
+        [FromQuery(Name = "hub.challenge")] string challenge
+    )
     {
-        
-        if (mode == "subscribe" && token == AppSettings.WebhookVerifyToken) return Ok(challenge);
+        if (mode == "subscribe" && token == AppSettings.WebhookVerifyToken)
+            return Ok(challenge);
 
         return StatusCode(403, "Forbidden");
     }
@@ -29,18 +26,21 @@ public class WebHookController : ControllerBase
         using var reader = new StreamReader(Request.Body);
         var bodyContent = await reader.ReadToEndAsync();
 
-        if (string.IsNullOrEmpty(bodyContent)) return BadRequest("Body vazio");
+        if (string.IsNullOrEmpty(bodyContent))
+            return BadRequest("Body vazio");
 
         try
         {
             var data = JObject.Parse(bodyContent);
-            
-            if (data is null) return Ok(data);
-            
+
+            if (data is null)
+                return Ok(data);
+
             var entries = data["entry"]?.Children().ToList();
-            
-            if (entries is null) return Ok(data);
-            
+
+            if (entries is null)
+                return Ok(data);
+
             foreach (var entry in entries)
             {
                 var changes = entry["changes"]?.ToObject<JArray>() ?? new JArray();
@@ -52,22 +52,20 @@ public class WebHookController : ControllerBase
 
                     foreach (var message in messageData)
                     {
-                        if (phoneNumberId is null) continue;
-                        
-                        if (message["from"]?.ToString() is null) continue;
-                        
+                        if (phoneNumberId is null)
+                            continue;
+
+                        if (message["from"]?.ToString() is null)
+                            continue;
+
                         var type = message["type"]?.ToString();
                         var userNumber = message["from"]?.ToString();
                         var userMessage = message["text"]?["body"]?.ToString();
 
-                        if (userMessage is null) continue;
-                        
-                        var update = new
-                        {
-                            User = userNumber,
-                            Text = userMessage
-                        };
-                        Processor.ProcessorHandler(update);
+                        if (userMessage is null)
+                            continue;
+
+                        Processor.Handler(new { User = userNumber, Text = userMessage });
                     }
                 }
             }

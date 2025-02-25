@@ -40,11 +40,13 @@ public static class Bot
 
             if (!response.IsSuccessStatusCode)
             {
+                Console.WriteLine("SEND NOK");
                 throw new WhatsExceptions(responseContent);
             }
         }
         catch (Exception ex)
         {
+            Console.WriteLine("SEND NOK");
             throw new WhatsExceptions($"Send ERR {ex.Message}");
         }
     }
