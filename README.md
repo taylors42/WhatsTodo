@@ -10,27 +10,29 @@ O WhatsApp To-Do Manager é uma solução inovadora que permite aos usuários ge
 
 ### Implementadas
 
-- [x] Criação de tarefas com título, data, hora e descrição
-- [x] Listagem de tarefas pendentes
-- [ ] Exclusão de tarefas
-- [ ] Sistema de notificações automáticas
+- [x] Criação de tarefas 
+- [x] Edição de tarefas existentes
+- [x] Exclusão de tarefas
+- [x] Exibir lista de tarefas pendentes
+- [x] Sistema de notificações automáticas
 - [x] Menu de ajuda com comandos disponíveis
 
-### Comandos Disponíveis
+### Ações Disponíveis
 
-- `/addtask`: Cria uma nova tarefa
-- `/edittask`: Editar uma tarefa
-- `/listtask`: Lista todas as tarefas futuras
-- `/creditos`: Criadores do projeto To-Do
-- `/help`: Exibe instruções e comandos disponíveis
+- Criar uma nova tarefa
+- Editar uma tarefa existente
+- Deletar uma tarefa
+- Listar todas as tarefas
+- Exibir instruções e comandos disponíveis
+- Exibir os criadores do projeto WhatsToDo
 
-## 🚀 Tecnologias
+## 🚀 Tecnologias  
+- .NET 9x como Framework Principal
+- ASP.NET para o backend
+- API do WhatsApp para comunicação
+- SQLite para armazenamento local
 
 Este projeto utiliza as seguintes tecnologias:
-
-- SQLite para armazenamento local
-- API do WhatsApp para comunicação
-- ASP.NET para o backend
 
 ## 📋 Pré-requisitos
 
@@ -41,17 +43,17 @@ Este projeto utiliza as seguintes tecnologias:
 
 ## 🔧 Instalação
 
-1. Clone o repositório
+1. Clone o repositório  
    
    ```bash
-   git clone https://github.com/seu-usuario/whatsapp-todo-manager.git
+   git clone https://github.com/taylors42/WhatsTodo
    ```
 
-2. Abra a solução no Visual Studio
+2. Abra a solução no Visual Studio 
    
    ```bash
-   cd whatsapp-todo-manager
-   WhatsAppToDoManager.sln
+   cd WhatsTodo
+   start WhatsTodo.sln
    ```
 
 3. Restaure os pacotes NuGet
@@ -67,19 +69,13 @@ Este projeto utiliza as seguintes tecnologias:
    # Edite o arquivo appsettings.json com suas configurações
    ```
 
-5. Execute as migrações do banco de dados
-   
-   ```bash
-   dotnet ef database update
-   ```
-
-6. Execute o projeto
+5. Execute o projeto
    
    ```bash
    dotnet run
    ```
 
-Alternativamente, você pode abrir o projeto no Visual Studio e pressionar F5 para executar em modo debug.
+Alternativamente, você pode abrir o projeto no Visual Studio e pressionar Ctrl + F5 para executar.
 
 ## 📊 Estrutura do Banco de Dados
 
@@ -93,6 +89,11 @@ Alternativamente, você pode abrir o projeto no Visual Studio e pressionar F5 pa
 - `is_completed` (BOOLEAN) - Status de conclusão
 - `created_at` (TIMESTAMP) - Data de criação
 - `user_phone` (VARCHAR) - Número do usuário (FK)
+- `completed_at` (TIMESTAMP) - Data e hora de conclusão
+
+### Tabela `users`
+- `phone` (VARCHAR(20)) - Número de telefone do usuário (PK)
+- `created_at` (TIMESTAMP) - Data de criação do usuário
 
 ## 📝 Status do Projeto
 
@@ -101,8 +102,8 @@ Alternativamente, você pode abrir o projeto no Visual Studio e pressionar F5 pa
 - [x] Estruturação do banco de dados
 - [x] Configuração inicial do projeto
 - [x] Implementação da API do WhatsApp
-- [ ] CRUD básico de tarefas
-- [ ] Sistema de notificações
+- [x] CRUD básico de tarefas
+- [x] Sistema de notificações
 
 ## 🤝 Contribuindo
 
@@ -120,9 +121,3 @@ Este projeto está sob a licença MIT. Veja o arquivo [LICENSE](LICENSE) para ma
 
 * **Taylor S** - *Trabalho Inicial* - [Taylors42](https://github.com/taylors42)
 * **Camily Z** - *Desenvolvedora* - [MilyZani](https://github.com/MilyZani)
-
-## 🙏 Agradecimentos
-
-* WhatsApp Business API
-* Comunidade Open Source
-* Todos os contribuidores deste projeto
