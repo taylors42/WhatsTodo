@@ -13,7 +13,7 @@ public static class Bot
     public static async Task SndMsg(string p, string message)
     {
         if (AppSettings.ApiKey is null || AppSettings.MetaApiUriNumber is null || AppSettings.ApiKey is null)
-            throw new WhatsExceptions("Error on AppSettings, something is null");
+            throw new Exception("Error on AppSettings, something is null");
 
         string url = $"https://graph.facebook.com/v21.0/{AppSettings.MetaApiUriNumber}/messages";
         
@@ -45,13 +45,13 @@ public static class Bot
             if (response.IsSuccessStatusCode is false)
             {
                 Console.WriteLine("SEND NOK");
-                throw new WhatsExceptions(responseContent);
+                throw new Exception(responseContent);
             }
         }
         catch (Exception ex)
         {
             Console.WriteLine("SEND NOK");
-            throw new WhatsExceptions($"Send ERR {ex.Message}");
+            throw new Exception($"Send ERR {ex.Message}");
         }
     }
     private static string FormatBrazilianPhoneNumber(string phoneNumber)
