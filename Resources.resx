@@ -153,7 +153,7 @@ CONTATO DOS CRIADORES DO BOT:
     <value>ERRO DE COMANDO- Use o formato válido para deletar uma tarefa, espaçando entre os elementos:/deletetask Titulo</value>
   </data>
   <data name="TaskNotFound" xml:space="preserve">
-    <value>Tarefa não encontrada. Use /helppara mais informações.</value>
+    <value>Tarefa não encontrada. Use /help para mais informações.</value>
   </data>
   <data name="DontHaveTask" xml:space="preserve">
     <value>Você não possui tarefas pendentes.</value>
