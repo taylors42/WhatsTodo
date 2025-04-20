@@ -56,7 +56,7 @@ public static class Bot
     }
     private static string FormatBrazilianPhoneNumber(string phoneNumber)
     {
-        string cleanNumber = new string(phoneNumber.Where(char.IsDigit).ToArray());
+        string cleanNumber = new(phoneNumber.Where(char.IsDigit).ToArray());
 
         bool startsWith55 = cleanNumber.StartsWith("55");
 

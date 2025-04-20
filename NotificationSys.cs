@@ -10,7 +10,6 @@ public static class NotificationSystem
 {
     private static readonly CancellationTokenSource _cancellationTokenSource = new();
     private const int CHECK_INTERVAL_SECONDS = 5;
-    private const int BRAZILIAN_UTC_TIME = -3;
     public static void Start()
     {
         Task.Run(RunNotificationLoop, _cancellationTokenSource.Token);
@@ -29,7 +28,7 @@ public static class NotificationSystem
         {
             try
             {
-                var datetime = await Program.GBH();
+                var datetime = DateTime.UtcNow.ToUniversalTime().AddHours(-3);
                 foreach (var todo in TodoData.GetTodo(datetime))
                 {
                     await TodoData.CompleteTodoAndNotifyUserAsync(todo.Id, Fmt(todo.Title, todo.Description, datetime), datetime);

@@ -45,11 +45,4 @@ public static class Program
 
         await app.RunAsync();
     }
-    public static async Task<DateTime> GBH()
-    {
-        using var client = new HttpClient();
-        var result = await client.GetAsync("http://taylors42.com.br:3000/datetime");
-        var responseBody = await result.Content.ReadAsStringAsync();
-        return DateTime.Parse(responseBody).ToUniversalTime().AddHours(-3);
-    }
 }

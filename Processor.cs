@@ -54,7 +54,7 @@ public static class Processor
                     return;
                 }
 
-                var currentHour = await Program.GBH();
+                var currentHour = DateTime.UtcNow.ToUniversalTime().AddHours(-3);
 
                 if (notificationDate < currentHour)
                 {
@@ -90,11 +90,11 @@ public static class Processor
             {
                 var (title, description, notificationDate) = ParseTask(ref text);
 
-                var currentHour = await Program.GBH();
+                var currentHour = DateTime.UtcNow.ToUniversalTime().AddHours(-3);
 
                 if (notificationDate < currentHour)
                 {
-                    await Bot.SndMsg(user, "horario no passado");
+                    await Bot.SndMsg(user, "Horario no passado");
                     return;
                 }
 

@@ -65,11 +65,11 @@ public class TodoData
         var task = await ctx
             .Todos
             .FirstOrDefaultAsync(task => 
-                task.Title.ToLower() == title.ToLower() && 
+                task.Title.Equals(title, StringComparison.CurrentCultureIgnoreCase) && 
                 task.UserPhone == phoneNumber
             );
 
-        task.Description = description;
+        task!.Description = description;
         task.NotificationDate = notificationDate;
         task.IsCompleted = false;
         task.CompletedAt = null;
@@ -151,8 +151,7 @@ public class TodoData
                 task.Title == title && 
                 task.UserPhone == phoneNumber
             );
-
-        ctx.Todos.Remove(todo);
+        ctx.Todos.Remove(todo!);
         await ctx.SaveChangesAsync();
     }
 }
