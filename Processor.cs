@@ -16,7 +16,7 @@ public static class Processor
         var title = withoutTime.Split(' ')[0];
         var description = withoutTime.Substring(title.Length).Trim();
         var date = DateTime.Parse(time).ToUniversalTime();
-        return (title, description, date.AddHours(-3));
+        return (title, description, date);
     }
 
     #endregion
