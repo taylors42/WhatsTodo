@@ -8,32 +8,49 @@ namespace WhatsTodo;
 public static class Processor
 {
     #region ParseTask
+
     private static (string, string, DateTime) ParseTask(ref string message)
     {
-        var withoutCommand = message.Substring(message.IndexOf(' ') + 1);
-        var time = withoutCommand.Substring(withoutCommand.Length - 5);
-        var withoutTime = withoutCommand.Substring(0, withoutCommand.Length - 5).Trim();
-        var title = withoutTime.Split(' ')[0];
-        var description = withoutTime.Substring(title.Length).Trim();
-        var date = DateTime.Parse(time).ToUniversalTime();
-        return (title, description, date);
+        try
+        {
+            var withoutCommand = message.Substring(message.IndexOf(' ') + 1);
+            var time = withoutCommand.Substring(withoutCommand.Length - 5);
+            var withoutTime = withoutCommand.Substring(0, withoutCommand.Length - 5).Trim();
+            var title = withoutTime.Split(' ')[0];
+            var description = withoutTime.Substring(title.Length).Trim();
+            var date = DateTime.Parse(time).ToUniversalTime().AddHours(-3);
+            return (title, description, date);
+        }
+        catch
+        {
+            throw new Exception();
+        }
     }
 
     #endregion
 
     public static async Task Handler(dynamic message)
     {
+        #region VerifyUser
+
         string user = message.User;
 
-        #region VerifyUser
-        if (await UserData.UserExists(user) is false)
+        try
         {
-            await UserData.AddUser(user);
-            await Bot.SndMsg(user, Resources.FirstUserMessage);
-            return;
+            if (await UserData.UserExists(user) is false)
+            {
+                await UserData.AddUser(user);
+                await Bot.SndMsg(user, Resources.FirstUserMessage);
+                return;
+            }
         }
-        #endregion
+        catch
+        {
+            await Bot.SndMsg(user, "Erro na verificação");
+        }
 
+        #endregion
+        
         string text = message.Text;
         string command = text.Split(' ')[0].ToLower();
 
@@ -55,7 +72,7 @@ public static class Processor
                 }
 
                 var currentHour = DateTime.UtcNow.ToUniversalTime().AddHours(-3);
-
+                
                 if (notificationDate < currentHour)
                 {
                     await Bot.SndMsg(user, "horario no passado");

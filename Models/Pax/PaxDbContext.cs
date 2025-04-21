@@ -11,6 +11,8 @@ public class PaxDbContext : DbContext
     public DbSet<Todo> Todos { get; set; }
     public DbSet<User> User { get; set; }
 
+    //public DbSet<Logs> Logs { get; set; }
+
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
     {
         if (optionsBuilder.IsConfigured is false)

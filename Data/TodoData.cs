@@ -42,13 +42,15 @@ public class TodoData
     public static async Task AddTaskAsync(string title, string description, DateTime notificationDate, string phoneNumber)
     {
         using var ctx = DbContextFactory.Create();
-        await ctx.AddAsync(new Todo(){
-                Title = title,
-                Description = description,
-                NotificationDate = notificationDate,
-                UserPhone = phoneNumber
-            }
-        );
+        var todo = new Todo()
+        {
+            Title = title,
+            Description = description,
+            NotificationDate = notificationDate,
+            UserPhone = phoneNumber,
+            IsCompleted = false
+        };
+        await ctx.AddAsync(todo);
         await ctx.SaveChangesAsync();
     }
 
@@ -65,7 +67,7 @@ public class TodoData
         var task = await ctx
             .Todos
             .FirstOrDefaultAsync(task => 
-                task.Title.Equals(title, StringComparison.CurrentCultureIgnoreCase) && 
+                task.Title.ToLower() == title.ToLower() && 
                 task.UserPhone == phoneNumber
             );
 
@@ -103,8 +105,10 @@ public class TodoData
     {
         using var ctx = DbContextFactory.Create();
         var todo = await ctx.Todos.FirstOrDefaultAsync(t => t.Id == id);
+
         todo!.CompletedAt = now;
         todo.IsCompleted = true;
+
         await ctx.SaveChangesAsync();
         await Bot.SndMsg(todo.UserPhone, msg);
     }

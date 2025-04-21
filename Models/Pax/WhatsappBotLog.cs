@@ -1,5 +1,6 @@
 ﻿#region Imports
 using Microsoft.EntityFrameworkCore.Metadata.Internal;
+using Newtonsoft.Json;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 using System.Diagnostics.CodeAnalysis;
@@ -12,24 +13,29 @@ public class WhatsappBotLog
     [Key]
     [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
     [Column("id")]
+    [JsonIgnore]
     public int Id { get; set; }
 
     [Required, NotNull]
     [DatabaseGenerated(DatabaseGeneratedOption.Computed)]
     [Column("timestamp")]
-    public DateTime Timestamp { get; set; } = DateTime.UtcNow;
+    [JsonIgnore]
+    public required DateTime Timestamp { get; set; } = DateTime.UtcNow;
     [Required, NotNull]
     [StringLength(20)]
     [Column ("phone_number")]
-    public string UserPhone { get; set; }
+    [JsonIgnore]
+    public required string UserPhone { get; set; }
 
     [Required, NotNull]
     [StringLength (10)]
     [Column("direction")]
+    [JsonIgnore]
     [RegularExpression("^(incoming|outgoing)$")]
-    public string Directrion { get; set; }
+    public required string Directrion { get; set; }
 
     [Required, NotNull]
     [Column("message_text")]
-    public string MessageText { get; set; }
+    [JsonIgnore]
+    public required string MessageText { get; set; }
 }

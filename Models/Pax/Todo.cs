@@ -1,3 +1,4 @@
+using Newtonsoft.Json;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 
@@ -9,34 +10,44 @@ public class Todo
     [Key]
     [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
     [Column("id")]
+    [JsonIgnore]
     public int Id { get; set; }
 
     [Required]
     [StringLength(100)]
     [Column("title")]
-    public string Title { get; set; }
+    [JsonIgnore]
+    public required string Title { get; set; }
 
     [Column("description")]
-    public string Description { get; set; }
+    [JsonIgnore]
+    public required string Description { get; set; }
 
     [Required]
     [Column("notification_date")]
     [DataType(DataType.Time)]
-    public DateTime NotificationDate { get; set; }
+    [JsonIgnore]
+    public required DateTime NotificationDate { get; set; }
 
     [Column("is_completed")]
-    public bool IsCompleted { get; set; } = false;
+    [JsonIgnore]
+    public required bool IsCompleted { get; set; } = false;
 
     [Column("created_at")]
+    [JsonIgnore]
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 
     [Column("completed_at")]
+    [JsonIgnore]
     public DateTime? CompletedAt { get; set; }
 
     [Column("user_phone")]
-    public string UserPhone { get; set; }
+    [JsonIgnore]
+
+    public required string UserPhone { get; set; }
 
     [ForeignKey("UserPhone")]
+    [JsonIgnore]
     public virtual User User { get; set; }
 }
 
