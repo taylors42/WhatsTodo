@@ -37,15 +37,18 @@ public static class Processor
 
         try
         {
+            await Log.LogMessageAsync(user, "Verificando se numero existe", "validation");
             if (await UserData.UserExists(user) is false)
             {
                 await UserData.AddUser(user);
                 await Bot.SndMsg(user, Resources.FirstUserMessage);
+                await Log.LogMessageAsync(user, "usuario adicionado com sucesso", "validation");
                 return;
             }
         }
         catch
         {
+            await Log.LogMessageAsync(user, "Catch na verificação de erro", "catch error");
             await Bot.SndMsg(user, "Erro na verificação");
         }
 
@@ -94,6 +97,7 @@ public static class Processor
             }
             catch
             {
+                await Log.LogMessageAsync(user, "erro catch ao adicionar comando", "validation");
                 await Bot.SndMsg(user, Resources.FormatInvalid);
             }
         }
@@ -137,6 +141,7 @@ public static class Processor
             }
             catch
             {
+                await Log.LogMessageAsync(user, "erro catch ao editar comando", "validation");
                 await Bot.SndMsg(user, Resources.FormatInvalid);
             }
         }

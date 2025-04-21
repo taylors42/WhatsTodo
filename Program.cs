@@ -1,5 +1,6 @@
 
 using Microsoft.EntityFrameworkCore;
+using WhatsTodo.Data;
 using WhatsTodo.Models;
 
 namespace WhatsTodo;
@@ -44,5 +45,12 @@ public static class Program
         app.Lifetime.ApplicationStopping.Register(NotificationSystem.Stop);
 
         await app.RunAsync();
+
+    }
+    public static PaxDbContext Create()
+    {
+        var options = new DbContextOptionsBuilder<PaxDbContext>();
+        options.UseNpgsql(AppSettings.ConnectionString);
+        return new PaxDbContext(options.Options);
     }
 }

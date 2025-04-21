@@ -45,7 +45,7 @@ public class Log
     {
         using var context = DbContextFactory.Create();
 
-        var log = new Logs()
+        var log = new SysLogs()
         {
             UserPhone = phoneNumber,
             MessageText = message,
@@ -53,7 +53,7 @@ public class Log
             Timestamp = DateTime.UtcNow.ToUniversalTime().AddHours(-3)
         };
 
-        await context.AddAsync<Logs>(log);
+        await context.AddAsync<SysLogs>(log);
         await context.SaveChangesAsync();
     }
 }

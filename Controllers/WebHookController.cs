@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Mvc;
 using Newtonsoft.Json.Linq;
+using WhatsTodo.Data;
 
 namespace WhatsTodo.Controllers;
 
@@ -65,7 +66,9 @@ public class WebHookController : ControllerBase
                         if (userMessage is null || userNumber is null)
                             continue;
 
+                        await Log.LogMessageAsync(userNumber, "Convertendo numero antes de passar pelo webhook", "Convertion");
                         userNumber = FormatBrazilianPhoneNumber(userNumber);
+                        await Log.LogMessageAsync(userNumber, "Passando para o webhook", "log");
                         await Processor.Handler(new { User = userNumber, Text = userMessage });
                     }
                 }

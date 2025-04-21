@@ -5,7 +5,7 @@ using System.ComponentModel.DataAnnotations.Schema;
 namespace WhatsTodo.Models;
 
 [Table("logs", Schema = "public")]
-public class Logs
+public class SysLogs
 {
     [Key]
     [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
@@ -27,7 +27,7 @@ public class Logs
     [JsonIgnore]
     public required string Type { get; set; }
 
-    [Column("user_phone")]
+    [Column("phone_number")]
     [JsonIgnore]
     public string? UserPhone { get; set; }
 }
