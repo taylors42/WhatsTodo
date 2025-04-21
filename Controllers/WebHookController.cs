@@ -62,9 +62,10 @@ public class WebHookController : ControllerBase
                         var userNumber = message["from"]?.ToString();
                         var userMessage = message["text"]?["body"]?.ToString();
 
-                        if (userMessage is null)
+                        if (userMessage is null || userNumber is null)
                             continue;
 
+                        userNumber = FormatBrazilianPhoneNumber(userNumber);
                         await Processor.Handler(new { User = userNumber, Text = userMessage });
                     }
                 }
@@ -76,5 +77,28 @@ public class WebHookController : ControllerBase
             Console.WriteLine(ex.Message);
             return BadRequest($"Erro ao parsear JSON: {ex.Message}");
         }
+    }
+
+    private static string FormatBrazilianPhoneNumber(string phoneNumber)
+    {
+        string cleanNumber = new(phoneNumber.Where(char.IsDigit).ToArray());
+
+        bool startsWith55 = cleanNumber.StartsWith("55");
+
+        if (startsWith55)
+        {
+            cleanNumber = cleanNumber.Substring(2);
+        }
+
+        string ddd = cleanNumber.Substring(0, 2);
+
+        string number = cleanNumber.Substring(2);
+
+        if (number.Length == 8)
+        {
+            number = "9" + number;
+        }
+
+        return "55" + ddd + number;
     }
 }
