@@ -37,14 +37,15 @@ public static class Processor
 
         try
         {
-            await Log.LogMessageAsync(user, "Verificando se numero existe", "validation");
+            await Log.LogMessageAsync(user, "verify if user exists", "validation");
             if (await UserData.UserExists(user) is false)
             {
                 await UserData.AddUser(user);
                 await Bot.SndMsg(user, Resources.FirstUserMessage);
-                await Log.LogMessageAsync(user, "usuario adicionado com sucesso", "validation");
+                await Log.LogMessageAsync(user, "user added on database", "validation");
                 return;
             }
+            await Log.LogMessageAsync(user, "user exists in the database", "validation");
         }
         catch
         {
@@ -56,6 +57,8 @@ public static class Processor
         
         string text = message.Text;
         string command = text.Split(' ')[0].ToLower();
+
+        await Log.LogMessageAsync(user, $"user type a command | command: {command}", "task_action");
 
         #region AddTask
 
@@ -71,6 +74,7 @@ public static class Processor
                         user,
                         $"Já existe uma tarefa ativa com o título '{title}'. Por favor, escolha um título diferente ou edite a tarefa existente usando /edittask."
                     );
+                    await Log.LogMessageAsync(user, $"exists a task with this name | title: {title}", "task_action");
                     return;
                 }
 
@@ -79,6 +83,7 @@ public static class Processor
                 if (notificationDate < currentHour)
                 {
                     await Bot.SndMsg(user, "horario no passado");
+                    await Log.LogMessageAsync(user, $"this task is in the past | cpu time: {currentHour} | task time: {notificationDate}", "task_action");
                     return;
                 }
 
@@ -93,6 +98,9 @@ public static class Processor
                     user,
                     $"Task criada com sucesso!\nTítulo: {title}\nDescrição: {description}\nHorário: {notificationDate}"
                 );
+
+                await Log.LogMessageAsync(user, $"task added with success | title: {title}", "task_action");
+
                 return;
             }
             catch
@@ -115,12 +123,14 @@ public static class Processor
 
                 if (notificationDate < currentHour)
                 {
+                    await Log.LogMessageAsync(user, $"this task is in the past | cpu time: {currentHour} | task time: {notificationDate}", "task_action");
                     await Bot.SndMsg(user, "Horario no passado");
                     return;
                 }
 
                 if (await TodoData.TaskExistsAsync(title, user) is false)
                 {
+                    await Log.LogMessageAsync(user, $"this task already exists | title: {title}", "task_action");
                     await Bot.SndMsg(user, Resources.TaskNotFound);
                     return;
                 }
@@ -136,6 +146,8 @@ public static class Processor
                     user,
                     $"Task atualizada com sucesso!\nTítulo: {title}\nNova Descrição: {description}\nNovo Horário: {notificationDate.Hour}:{notificationDate.Minute}"
                 );
+
+                await Log.LogMessageAsync(user, "task updated", "task_action");
 
                 return;
             }
@@ -159,17 +171,20 @@ public static class Processor
 
         else if (Commands.DeleteCommand.Split(",").Select(c => c.Trim()).Contains(command))
         {
-            var taskTitle = message.Text.Substring(message.Text.IndexOf(' ') + 1).Trim();
+            var title = message.Text.Substring(message.Text.IndexOf(' ') + 1).Trim();
 
-            if (await TodoData.TaskExistsAsync(taskTitle, user) is false)
+            if (await TodoData.TaskExistsAsync(title, user) is false)
             {
+                await Log.LogMessageAsync(user, $"this tasks exists | title: {title}", "task_action");
                 await Bot.SndMsg(user, Resources.TaskNotFound);
                 return;
             }
 
-            await TodoData.RemoveTaskAsync(taskTitle, user);
+            await TodoData.RemoveTaskAsync(title, user);
 
-            await Bot.SndMsg(user, $"Tarefa '{taskTitle}' removida com sucesso!");
+            await Bot.SndMsg(user, $"Tarefa '{title}' removida com sucesso!");
+
+            await Log.LogMessageAsync(user, $"task removed with success | title: {title}", "task_action");
         }
 
         #endregion

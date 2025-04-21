@@ -66,10 +66,13 @@ public class WebHookController : ControllerBase
                         if (userMessage is null || userNumber is null)
                             continue;
 
-                        await Log.LogMessageAsync(userNumber, "Convertendo numero antes de passar pelo webhook", "Convertion");
-                        userNumber = FormatBrazilianPhoneNumber(userNumber);
-                        await Log.LogMessageAsync(userNumber, "Passando para o webhook", "log");
-                        await Processor.Handler(new { User = userNumber, Text = userMessage });
+                        await Log.LogMessageAsync(userNumber, $"formatting number to a brazilian number | number: {userNumber}", "Convertion");
+                        
+                        var newNumber = FormatBrazilianPhoneNumber(userNumber);
+                        
+                        await Log.LogMessageAsync(userNumber, $"passing number to the Handler | number: {newNumber}", "log");
+                        
+                        await Processor.Handler(new { User = newNumber, Text = userMessage });
                     }
                 }
             }
