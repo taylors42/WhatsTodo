@@ -10,7 +10,7 @@ public static class Bot
 {
     private static readonly HttpClient _client = new();
 
-    public static async Task SndMsg(string p, string message)
+    public static async Task SndMsg(string phoneNumber, string message)
     {
         if (AppSettings.ApiKey is null || AppSettings.MetaApiUriNumber is null || AppSettings.ApiKey is null)
             throw new Exception("Error on AppSettings, something is null");
@@ -21,12 +21,10 @@ public static class Bot
 
         _client.DefaultRequestHeaders.Add("Authorization", $"Bearer {AppSettings.ApiKey}");
 
-        p = FormatBrazilianPhoneNumber(p);
-
         var payload = new
         {
             messaging_product = "whatsapp",
-            to = p,
+            to = phoneNumber,
             type = "text",
             text = new { body = $"{message}" },
         };
@@ -53,27 +51,5 @@ public static class Bot
             Console.WriteLine("SEND NOK");
             throw new Exception($"Send ERR {ex.Message}");
         }
-    }
-    private static string FormatBrazilianPhoneNumber(string phoneNumber)
-    {
-        string cleanNumber = new(phoneNumber.Where(char.IsDigit).ToArray());
-
-        bool startsWith55 = cleanNumber.StartsWith("55");
-
-        if (startsWith55)
-        {
-            cleanNumber = cleanNumber.Substring(2);
-        }
-
-        string ddd = cleanNumber.Substring(0, 2);
-
-        string number = cleanNumber.Substring(2);
-
-        if (number.Length == 8)
-        {
-            number = "9" + number;
-        }
-
-        return "55" + ddd + number;
     }
 }

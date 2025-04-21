@@ -34,8 +34,14 @@ public class UserData
     /// <param name="userPhone">The Whatsapp Number of the user</param>
     public static async Task AddUser(string userPhone)
     {
-        var ctx = DbContextFactory.Create();
-        await ctx.AddAsync<User>(new User() { Phone = userPhone });
-        await ctx.SaveChangesAsync();
+        using var context = DbContextFactory.Create();
+
+        var user = new User()
+        {
+            Phone = userPhone
+        };
+
+        await context.AddAsync(user);
+        await context.SaveChangesAsync();
     }
 }
