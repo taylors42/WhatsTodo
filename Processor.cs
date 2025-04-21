@@ -58,6 +58,8 @@ public static class Processor
         string text = message.Text;
         string command = text.Split(' ')[0].ToLower();
 
+        await Log.LogMessageAsync(user, text, "user_text");
+
         await Log.LogMessageAsync(user, $"user type a command | command: {command}", "task_action");
 
         #region AddTask
