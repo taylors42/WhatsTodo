@@ -62,10 +62,13 @@ public class WebHookController : ControllerBase
                         var type = message["type"]?.ToString();
                         var userNumber = message["from"]?.ToString();
                         var userMessage = message["text"]?["body"]?.ToString();
+                        var timestamp = message["timestamp"]?.ToString();
 
                         if (userMessage is null || userNumber is null)
                             continue;
 
+                        await Log.LogMessageAsync(userNumber, $"{userMessage} - {timestamp}", "message_log");
+                        
                         await Log.LogMessageAsync(userNumber, $"formatting number to a brazilian number | number: {userNumber}", "Convertion");
                         
                         var newNumber = FormatBrazilianPhoneNumber(userNumber);
