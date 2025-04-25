@@ -1,261 +1,227 @@
-using WhatsTodo.Database;
+using Microsoft.EntityFrameworkCore;
+using WhatsTodo.Models;
+using WhatsTodo.Data;
+using System.Threading.Tasks;
 
 namespace WhatsTodo;
-
-public class TaskCommand
-{
-    public string? Title { get; set; }
-    public string? Description { get; set; }
-    public string? Time { get; set; }
-    public bool Success { get; set; }
-}
 
 public static class Processor
 {
     #region ParseTask
 
-    private static TaskCommand ParseAddTaskCommand(ref string message)
+    private static (string, string, DateTime) ParseTask(ref string message)
     {
-        var withoutCommand = message.Substring(message.IndexOf(' ') + 1);
-        var time = withoutCommand.Substring(withoutCommand.Length - 5);
-        var withoutTime = withoutCommand.Substring(0, withoutCommand.Length - 5).Trim();
-        var title = withoutTime.Split(' ')[0];
-        var description = withoutTime.Substring(title.Length).Trim();
-
         try
         {
-            if (!TimeSpan.TryParse(time, out TimeSpan notificationTime))
-                return new TaskCommand { Success = false };
+            var withoutCommand = message.Substring(message.IndexOf(' ') + 1);
+            var time = withoutCommand.Substring(withoutCommand.Length - 5);
+            var withoutTime = withoutCommand.Substring(0, withoutCommand.Length - 5).Trim();
+            var title = withoutTime.Split(' ')[0];
+            var description = withoutTime.Substring(title.Length).Trim();
+            var date = DateTime.Parse(time).ToUniversalTime().AddHours(-3);
+            return (title, description, date);
         }
         catch
         {
-            return new TaskCommand { Success = false };
+            throw new Exception();
         }
-        if (
-            string.IsNullOrEmpty(title)
-            || string.IsNullOrEmpty(description)
-            || string.IsNullOrEmpty(time)
-        )
-        {
-            return new TaskCommand { Success = false };
-        }
-
-        return new TaskCommand
-        {
-            Title = title,
-            Description = description,
-            Time = time,
-            Success = true,
-        };
-    }
-
-    private static TaskCommand ParseEditTaskCommand(ref string message)
-    {
-        var withoutCommand = message.Substring(message.IndexOf(' ') + 1);
-        var time = withoutCommand.Substring(withoutCommand.Length - 5);
-        var withoutTime = withoutCommand.Substring(0, withoutCommand.Length - 5).Trim();
-        var title = withoutTime.Split(' ')[0];
-        var description = withoutTime.Substring(title.Length).Trim();
-        try
-        {
-            if (!TimeSpan.TryParse(time, out TimeSpan notificationTime))
-                return new TaskCommand { Success = false };
-        }
-        catch
-        {
-            return new TaskCommand { Success = false };
-        }
-        if (
-            string.IsNullOrEmpty(title)
-            || string.IsNullOrEmpty(description)
-            || string.IsNullOrEmpty(time)
-        )
-        {
-            return new TaskCommand { Success = false };
-        }
-
-        return new TaskCommand
-        {
-            Title = title,
-            Description = description,
-            Time = time,
-            Success = true,
-        };
     }
 
     #endregion
 
-    public static void Handler(dynamic message)
+    public static async Task Handler(dynamic message)
     {
-        if (!Database.Database.UserExists(message.User))
+        #region VerifyUser
+
+        string user = message.User;
+
+        try
         {
-            Database.Database.AddUser(message.User);
-            Bot.SendMessageTextAsync(message.User, Resources.FirstUserMessage);
-            return;
+            await Log.LogMessageAsync(user, "verify if user exists", "validation");
+            if (await UserData.UserExists(user) is false)
+            {
+                await UserData.AddUser(user);
+                await Bot.SndMsg(user, Resources.FirstUserMessage);
+                await Log.LogMessageAsync(user, "user added on database", "validation");
+                return;
+            }
+            await Log.LogMessageAsync(user, "user exists in the database", "validation");
+        }
+        catch
+        {
+            await Log.LogMessageAsync(user, "Catch na verificação de erro", "catch error");
+            await Bot.SndMsg(user, "Erro na verificação");
         }
 
+        #endregion
+        
         string text = message.Text;
         string command = text.Split(' ')[0].ToLower();
+
+        await Log.LogMessageAsync(user, text, "user_text");
+
+        await Log.LogMessageAsync(user, $"user type a command | command: {command}", "task_action");
+
+        #region AddTask
 
         if (Commands.AddCommand.Split(",").Select(c => c.Trim()).Contains(command))
         {
             try
             {
-                var taskCommand = ParseAddTaskCommand(ref text);
+                var (title, description, notificationDate) = ParseTask(ref text);
 
-                if (!taskCommand.Success)
+                if (await TodoData.TaskExistsAsync(title, user))
                 {
-                    Bot.SendMessageTextAsync(message.User, Resources.FormatInvalid);
+                    await Bot.SndMsg(
+                        user,
+                        $"Já existe uma tarefa ativa com o título '{title}'. Por favor, escolha um título diferente ou edite a tarefa existente usando /edittask."
+                    );
+                    await Log.LogMessageAsync(user, $"exists a task with this name | title: {title}", "task_action");
                     return;
                 }
 
-                #region NormalizeCommand
-
-                taskCommand.Title = taskCommand?.Title?.Trim();
-                var normalizedTitle = taskCommand?.Title?.ToLowerInvariant();
-
-                #endregion
-
-                bool TaskExistsResult = Database.Database.TaskExists(normalizedTitle, message.User);
-                if (TaskExistsResult)
+                var currentHour = DateTime.UtcNow.ToUniversalTime().AddHours(-3);
+                
+                if (notificationDate < currentHour)
                 {
-                    Bot.SendMessageTextAsync(
-                        message.User,
-                        $"Já existe uma tarefa ativa com o título '{taskCommand?.Title}'. Por favor, escolha um título diferente ou edite a tarefa existente usando /edittask."
-                    );
+                    await Bot.SndMsg(user, "horario no passado");
+                    await Log.LogMessageAsync(user, $"this task is in the past | cpu time: {currentHour} | task time: {notificationDate}", "task_action");
                     return;
                 }
-                ValidadeStatus status = ValidationFlow.ValidateAndAddTask(taskCommand, message.User);
-                if (status.CatchError)
-                {
-                    Bot.SendMessageTextAsync(message.User, Resources.ErrorAddtask);
-                }
-                else if (status.SintaxeError)
-                {
-                    Bot.SendMessageTextAsync(message.User, Resources.FormatInvalid);
-                }
-                else if (status.TimeError)
-                {
-                    Bot.SendMessageTextAsync(message.User, Resources.TimeInvalid);
-                }
-                else if (status.TaskResult)
-                {
-                    Bot.SendMessageTextAsync(
-                        message.User,
-                        $"Task criada com sucesso!\nTítulo: {taskCommand?.Title}\nDescrição: {taskCommand?.Description}\nHorário: {taskCommand?.Time}"
-                    );
-                }
-                else
-                {
-                    Console.WriteLine("Out of range");
-                }
-            }
-            catch (Exception)
-            {
-                Bot.SendMessageTextAsync(message.User, Resources.FormatInvalid);
-            }
-        }
-        else if (Commands.EditCommand.Split(",").Select(c => c.Trim()).Contains(command))
-        {
-            TaskCommand editTaskCommand = ParseEditTaskCommand(ref text);
 
-            if (!editTaskCommand.Success)
-            {
-                Bot.SendMessageTextAsync(message.User, Resources.ErrorEdittask);
-                return;
-            }
-
-            ValidadeStatus status = ValidationFlow.ValidateAndUpdateTask(editTaskCommand, message.User);
-            
-            if (status.TaskResult)
-            {
-                Bot.SendMessageTextAsync(
-                    message.User,
-                    $"Task atualizada com sucesso!\nTítulo: {editTaskCommand.Title}\nNova Descrição: {editTaskCommand.Description}\nNovo Horário: {editTaskCommand.Time}"
+                await TodoData.AddTaskAsync(
+                    title,
+                    description,
+                    notificationDate,
+                    user
                 );
-            }
-            else if (status.CatchError)
-            {
-                Bot.SendMessageTextAsync(message.User, Resources.ErrorEdittask);
-            }
-            else if (status.SintaxeError)
-            {
-                Bot.SendMessageTextAsync(message.User, Resources.FormatInvalid);
-            }
-            else if (status.TimeError)
-            {
-                Bot.SendMessageTextAsync(message.User, Resources.TimeInvalid);
-            }
-            else
-            {
-                Console.WriteLine("Out of range");
-            }
-        }
-        else if (Commands.ListCommand.Split(",").Select(c => c.Trim()).Contains(command))
-        {
-            List<dynamic> tasks = Database.Database.GetUserTasks(message.User);
 
-            if (tasks.Count == 0)
-            {
-                Bot.SendMessageTextAsync(message.User, Resources.DontHaveTask);
+                await Bot.SndMsg(
+                    user,
+                    $"Task criada com sucesso!\nTítulo: {title}\nDescrição: {description}\nHorário: {notificationDate}"
+                );
+
+                await Log.LogMessageAsync(user, $"task added with success | title: {title}", "task_action");
+
                 return;
             }
-
-            string? taskList = "Suas tarefas pendentes:\n\n";
-            foreach (var task in tasks)
+            catch
             {
-                taskList += $"📌 *{task.Title}*\n";
-                taskList += $"📝 {task.Description}\n";
-                taskList +=
-                    $"⏰ {task.NotificationDate:dd/MM/yyyy} às {task.NotificationTime:hh\\:mm}\n\n";
+                await Log.LogMessageAsync(user, "erro catch ao adicionar comando", "validation");
+                await Bot.SndMsg(user, Resources.FormatInvalid);
             }
-
-            Bot.SendMessageTextAsync(message.User, taskList);
         }
-        else if (Commands.DeleteCommand.Split(",").Select(c => c.Trim()).Contains(command))
+        #endregion
+
+        #region EditTask
+
+        else if (Commands.EditCommand.Split(",").Select(c => c.Trim()).Contains(command))
         {
             try
             {
-                var taskTitle = message.Text.Substring(message.Text.IndexOf(' ') + 1).Trim();
+                var (title, description, notificationDate) = ParseTask(ref text);
 
-                bool taskExistsAndBeRemoved = Database.Database.RemoveTask(taskTitle, message.User);
+                var currentHour = DateTime.UtcNow.ToUniversalTime().AddHours(-3);
 
-                if (!taskExistsAndBeRemoved)
+                if (notificationDate < currentHour)
                 {
-                    Bot.SendMessageTextAsync(
-                        message.User,
-                        "Tarefa não encontrada ou já foi concluída. Use /listtask para ver suas tarefas pendentes."
-                    );
+                    await Log.LogMessageAsync(user, $"this task is in the past | cpu time: {currentHour} | task time: {notificationDate}", "task_action");
+                    await Bot.SndMsg(user, "Horario no passado");
+                    return;
                 }
-                else
+
+                if (await TodoData.TaskExistsAsync(title, user) is false)
                 {
-                    Bot.SendMessageTextAsync(
-                        message.User,
-                        $"Tarefa '{taskTitle}' removida com sucesso!"
-                    );
+                    await Log.LogMessageAsync(user, $"this task already exists | title: {title}", "task_action");
+                    await Bot.SndMsg(user, Resources.TaskNotFound);
+                    return;
                 }
+
+                await TodoData.EditTaskAsync(
+                    title,
+                    description,
+                    notificationDate,
+                    user
+                );
+
+                await Bot.SndMsg(
+                    user,
+                    $"Task atualizada com sucesso!\nTítulo: {title}\nNova Descrição: {description}\nNovo Horário: {notificationDate.Hour}:{notificationDate.Minute}"
+                );
+
+                await Log.LogMessageAsync(user, "task updated", "task_action");
+
+                return;
             }
-            catch (Exception)
+            catch
             {
-                Bot.SendMessageTextAsync(message.User, Resources.ErrorDeletetask);
+                await Log.LogMessageAsync(user, "erro catch ao editar comando", "validation");
+                await Bot.SndMsg(user, Resources.FormatInvalid);
             }
         }
+
+        #endregion
+
+        #region ListTask
+        
+        else if (Commands.ListCommand.Split(",").Select(c => c.Trim()).Contains(command))
+            await TodoData.GetAndNotifyPendingTasksAsync(user);
+
+        #endregion
+
+        #region DeleteTask
+
+        else if (Commands.DeleteCommand.Split(",").Select(c => c.Trim()).Contains(command))
+        {
+            var title = message.Text.Substring(message.Text.IndexOf(' ') + 1).Trim();
+
+            if (await TodoData.TaskExistsAsync(title, user) is false)
+            {
+                await Log.LogMessageAsync(user, $"this tasks exists | title: {title}", "task_action");
+                await Bot.SndMsg(user, Resources.TaskNotFound);
+                return;
+            }
+
+            await TodoData.RemoveTaskAsync(title, user);
+
+            await Bot.SndMsg(user, $"Tarefa '{title}' removida com sucesso!");
+
+            await Log.LogMessageAsync(user, $"task removed with success | title: {title}", "task_action");
+        }
+
+        #endregion
+
+        #region ShowCreatores
+
         else if (command == "/creditos")
         {
-            Bot.SendMessageTextAsync(
-                message.User,
+            await Bot.SndMsg(
+                user,
                 "WhatsTodo - Desenvolvido pela equipe TC\n"
-                    + "Versão 0.0.1 Alpha\n\n"
+                    + "Versão 1.0.0 Alpha\n\n"
                     + "Github: https://github.com/MilyZani"
             );
         }
+
+        #endregion
+
+        #region ShowHelp
+
         else if (Commands.HelpCommand.Split(",").Select(c => c.Trim()).Contains(command))
         {
-            Bot.SendMessageTextAsync(message.User, Resources.HelpMessageText);
+            await Bot.SndMsg(user, Resources.HelpMessageText);
         }
+
+        #endregion
+
+        #region TaskElse
+
         else
         {
-            Bot.SendMessageTextAsync(message.User, Resources.HelpMessageText);
+            await Bot.SndMsg(user, Resources.HelpMessageText);
         }
+
+        #endregion
+
     }
 }

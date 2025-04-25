@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Mvc;
 using Newtonsoft.Json.Linq;
+using WhatsTodo.Data;
 
 namespace WhatsTodo.Controllers;
 
@@ -61,11 +62,20 @@ public class WebHookController : ControllerBase
                         var type = message["type"]?.ToString();
                         var userNumber = message["from"]?.ToString();
                         var userMessage = message["text"]?["body"]?.ToString();
+                        var timestamp = message["timestamp"]?.ToString();
 
-                        if (userMessage is null)
+                        if (userMessage is null || userNumber is null)
                             continue;
 
-                        Processor.Handler(new { User = userNumber, Text = userMessage });
+                        await Log.LogMessageAsync(userNumber, $"{userMessage} - {timestamp}", "message_log");
+                        
+                        await Log.LogMessageAsync(userNumber, $"formatting number to a brazilian number | number: {userNumber}", "Convertion");
+                        
+                        var newNumber = FormatBrazilianPhoneNumber(userNumber);
+                        
+                        await Log.LogMessageAsync(userNumber, $"passing number to the Handler | number: {newNumber}", "log");
+                        
+                        await Processor.Handler(new { User = newNumber, Text = userMessage });
                     }
                 }
             }
@@ -76,5 +86,28 @@ public class WebHookController : ControllerBase
             Console.WriteLine(ex.Message);
             return BadRequest($"Erro ao parsear JSON: {ex.Message}");
         }
+    }
+
+    private static string FormatBrazilianPhoneNumber(string phoneNumber)
+    {
+        string cleanNumber = new(phoneNumber.Where(char.IsDigit).ToArray());
+
+        bool startsWith55 = cleanNumber.StartsWith("55");
+
+        if (startsWith55)
+        {
+            cleanNumber = cleanNumber.Substring(2);
+        }
+
+        string ddd = cleanNumber.Substring(0, 2);
+
+        string number = cleanNumber.Substring(2);
+
+        if (number.Length == 8)
+        {
+            number = "9" + number;
+        }
+
+        return "55" + ddd + number;
     }
 }

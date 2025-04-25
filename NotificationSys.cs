@@ -1,15 +1,18 @@
+using System;
 using System.Threading;
+using System.Threading.Tasks;
+using WhatsTodo.Data;
+using WhatsTodo.Models;
 
 namespace WhatsTodo;
 
 public static class NotificationSystem
 {
     private static readonly CancellationTokenSource _cancellationTokenSource = new();
-    private const int CHECK_INTERVAL_SECONDS = 10;
-
+    private const int CHECK_INTERVAL_SECONDS = 5;
     public static void Start()
     {
-        Task.Run(NotificationLoop, _cancellationTokenSource.Token);
+        Task.Run(RunNotificationLoop, _cancellationTokenSource.Token);
     }
 
     public static void Stop()
@@ -17,67 +20,38 @@ public static class NotificationSystem
         _cancellationTokenSource.Cancel();
     }
 
-    private static TimeZoneInfo GetBrasiliaTimeZone()
+    private static async Task RunNotificationLoop()
     {
-        try
-        {
-            return TimeZoneInfo.FindSystemTimeZoneById("E. South America Standard Time");
-        }
-        catch
-        {
-            try
-            {
-                return TimeZoneInfo.FindSystemTimeZoneById("America/Sao_Paulo");
-            }
-            catch
-            {
-                return TimeZoneInfo.CreateCustomTimeZone(
-                    "Brasilia Standard Time",
-                    TimeSpan.FromHours(-3),
-                    "Brasilia Time",
-                    "Brasilia Standard Time"
-                );
-            }
-        }
-    }
-
-    private static async Task NotificationLoop()
-    {
-        var brasiliaTimeZone = GetBrasiliaTimeZone();
-
+        Console.WriteLine("Sistema de notificação iniciado");
+        
         while (!_cancellationTokenSource.Token.IsCancellationRequested)
         {
             try
             {
-                var nowInBrasilia = TimeZoneInfo.ConvertTimeFromUtc(
-                    DateTime.UtcNow,
-                    brasiliaTimeZone
-                );
-                var tasks = Database.Database.GetTasksDueAt(nowInBrasilia);
-
-                foreach (var task in tasks)
+                var datetime = DateTime.UtcNow.ToUniversalTime().AddHours(-3);
+                foreach (var todo in TodoData.GetTodo(datetime))
                 {
-                    var formattedTime = nowInBrasilia.ToString("dd/MM/yyyy HH:mm");
-                    var message =
-                        $"🔔 Tarefa Agendada!\n\n📌 *{task.Title}*\n📝 {task.Description}\n⏰ {formattedTime}";
-                    await Bot.SendMessageTextAsync(task.UserPhone, message);
-                    await Database.Database.MarkNotificationSent(task.Id, nowInBrasilia);
+                    await TodoData.CompleteTodoAndNotifyUserAsync(todo.Id, Fmt(todo.Title, todo.Description, datetime), datetime);
                 }
-
-                var nextCheck = nowInBrasilia.AddSeconds(
-                    CHECK_INTERVAL_SECONDS - (nowInBrasilia.Second % CHECK_INTERVAL_SECONDS)
-                );
-                var delayMs = (int)(nextCheck - nowInBrasilia).TotalMilliseconds;
-                await Task.Delay(delayMs, _cancellationTokenSource.Token);
+                await Task.Delay(TimeSpan.FromSeconds(CHECK_INTERVAL_SECONDS), _cancellationTokenSource.Token);
+            }
+            catch (OperationCanceledException)
+            {
+                Console.WriteLine("exception no notificationsys");
+                break;
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"Erro no loop de notificações: {ex.Message}");
-                await Task.Delay(
-                    TimeSpan.FromSeconds(CHECK_INTERVAL_SECONDS),
-                    _cancellationTokenSource.Token
-                );
+                Console.WriteLine($"Erro no sistema de notificação: {ex.Message}");
+                Console.WriteLine($"Stack trace: {ex.StackTrace}");
+
+                await Task.Delay(TimeSpan.FromSeconds(CHECK_INTERVAL_SECONDS), _cancellationTokenSource.Token);
             }
         }
+
+        Console.WriteLine("Sistema de notificação finalizado");
     }
+    private static string Fmt(string title, string description, DateTime time) =>
+        $"🔔 Lembrete! 📅 {time:dd/MM/yyyy HH:mm}\n\n📌 *{title}*\n\n{description}";
+    
 }

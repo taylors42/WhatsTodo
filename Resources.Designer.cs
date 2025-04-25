@@ -150,7 +150,7 @@ namespace WhatsTodo {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to Tarefa não encontrada. Use /helppara mais informações..
+        ///   Looks up a localized string similar to Tarefa não encontrada. Use /help para mais informações..
         /// </summary>
         internal static string TaskNotFound {
             get {
